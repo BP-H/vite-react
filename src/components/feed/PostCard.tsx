@@ -4,7 +4,7 @@ import bus from "../../lib/bus";
 
 type XY = { x: number; y: number };
 
-// Inline SVG placeholder (also good for favicon if you want)
+// Inline SVG avatar (also fine to reuse as favicon)
 const AVATAR_PLACEHOLDER =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(
@@ -21,28 +21,31 @@ const AVATAR_PLACEHOLDER =
     </svg>`
   );
 
-// tiny inline icons
+// icons (stroke-only for that subtle look)
 const Heart = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-    <path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z" stroke="currentColor" strokeWidth="1.6"/>
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z" stroke="currentColor" strokeWidth="1.6" />
   </svg>
 );
 const Chat = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden>
     <path d="M21 12a8 8 0 1 1-3.1-6.3L21 5v7z" stroke="currentColor" strokeWidth="1.6"/>
   </svg>
 );
 const Share = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden>
     <path d="M4 12v7a1 1 0 0 0 1 1h14M12 16l7-7m0 0h-5m5 0v5" stroke="currentColor" strokeWidth="1.6"/>
   </svg>
 );
 const Portal = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden>
     <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.6"/>
     <circle cx="12" cy="12" r="3" fill="currentColor"/>
   </svg>
 );
+
+// utility: seeded pseudo-rng so canvases are deterministic
+function seeded(n: number) { let x = Math.sin(n * 7.77) * 10000; return x - Math.floor(x); }
 
 export default function PostCard({
   post,
@@ -52,14 +55,24 @@ export default function PostCard({
   onPortal: (p: Post, at?: XY) => void;
 }) {
   const cardRef = useRef<HTMLDivElement | null>(null);
+  const mediaBoxRef = useRef<HTMLDivElement | null>(null);
+  const procRef = useRef<HTMLCanvasElement | null>(null);
+  const modelRef = useRef<HTMLCanvasElement | null>(null);
+  const animId = useRef<number | null>(null);
   const [isPortrait, setIsPortrait] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [inView, setInView] = useState(false);
 
-  // Voice “enter world” hover target
+  const kind: "image" | "proc" | "model" = post.image?.startsWith("proc:")
+    ? "proc"
+    : post.image?.startsWith("model:")
+    ? "model"
+    : "image";
+
+  // Hover target for voice “enter world”
   useEffect(() => {
     const node = cardRef.current;
     if (!node) return;
-
     const onEnter = () => {
       const r = node.getBoundingClientRect();
       bus.emit("feed:hover", {
@@ -80,20 +93,184 @@ export default function PostCard({
     bus.emit("orb:portal", { post, ...at });
   }
 
+  // IntersectionObserver to only animate canvases in view
+  useEffect(() => {
+    const el = mediaBoxRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            setInView(true);
+          } else {
+            setInView(false);
+          }
+        }
+      },
+      { rootMargin: "200px 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // Procedural canvas (one-shot)
+  useEffect(() => {
+    if (kind !== "proc") return;
+    const c = procRef.current;
+    if (!c) return;
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const parent = c.parentElement as HTMLElement;
+    const w = parent?.clientWidth || 800;
+    const h = Math.floor((post as any)?.h || w * 0.56);
+    c.width = Math.floor(w * dpr);
+    c.height = Math.floor(h * dpr);
+    c.style.width = w + "px";
+    c.style.height = h + "px";
+    const g = c.getContext("2d");
+    if (!g) return;
+
+    const s = (post.id ?? 1) * 13;
+    const hue = Math.floor(seeded(s) * 360);
+    const hue2 = (hue + 200) % 360;
+
+    // background gradient
+    const grd = g.createLinearGradient(0, 0, c.width, c.height);
+    grd.addColorStop(0, `hsl(${hue},70%,22%)`);
+    grd.addColorStop(1, `hsl(${hue2},70%,14%)`);
+    g.fillStyle = grd;
+    g.fillRect(0, 0, c.width, c.height);
+
+    // soft blobs
+    for (let i = 0; i < 8; i++) {
+      const rr = (0.15 + seeded(s + i) * 0.25) * Math.min(c.width, c.height);
+      const x = seeded(s + i * 3.1) * c.width;
+      const y = seeded(s + i * 7.7) * c.height;
+      const rgr = g.createRadialGradient(x, y, 1, x, y, rr);
+      const h = Math.floor((hue + i * 22) % 360);
+      rgr.addColorStop(0, `hsla(${h},80%,60%,.35)`);
+      rgr.addColorStop(1, `hsla(${h},80%,60%,0)`);
+      g.fillStyle = rgr;
+      g.beginPath(); g.arc(x, y, rr, 0, Math.PI * 2); g.fill();
+    }
+  }, [kind, post]);
+
+  // Tiny “low-poly tree” pseudo-3D model (lightweight animation)
+  useEffect(() => {
+    if (kind !== "model") return;
+    const c = modelRef.current;
+    if (!c) return;
+    const parent = c.parentElement as HTMLElement;
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    const w = parent?.clientWidth || 800;
+    const h = Math.floor(w * 0.56);
+    c.width = Math.floor(w * dpr);
+    c.height = Math.floor(h * dpr);
+    c.style.width = w + "px";
+    c.style.height = h + "px";
+    const g = c.getContext("2d");
+    if (!g) return;
+
+    const cx = c.width / 2, cy = c.height * 0.7;
+    const fov = 480 * dpr;
+
+    function proj(x: number, y: number, z: number) {
+      const s = fov / (fov + z);
+      return { x: cx + x * s, y: cy - y * s, s };
+    }
+
+    const rings = [
+      { y: 160, r: 8 },
+      { y: 120, r: 42 },
+      { y: 80, r: 32 },
+      { y: 40, r: 22 },
+      { y: 0, r: 12 },
+    ];
+
+    let t0 = performance.now();
+    const draw = (t: number) => {
+      if (!inView) { // pause when not visible
+        animId.current = requestAnimationFrame(draw);
+        return;
+      }
+      const dt = (t - t0) / 1000;
+      t0 = t;
+
+      const rot = (t * 0.0006) % (Math.PI * 2);
+      g.clearRect(0, 0, c.width, c.height);
+
+      // ground
+      g.fillStyle = "rgba(25,28,40,.9)";
+      g.fillRect(0, cy, c.width, c.height - cy);
+
+      // trunk
+      for (let i = 0; i < 14; i++) {
+        const y = 10 * i;
+        const p1 = proj(-6, y, 40);
+        const p2 = proj( 6, y, 40);
+        const p3 = proj( 6, y+10, 40);
+        const p4 = proj(-6, y+10, 40);
+        g.fillStyle = "rgba(120,78,40,.9)";
+        g.beginPath(); g.moveTo(p1.x, p1.y); g.lineTo(p2.x, p2.y); g.lineTo(p3.x, p3.y); g.lineTo(p4.x, p4.y); g.closePath(); g.fill();
+      }
+
+      // leaves (3 stacked cones)
+      const cones = [
+        { baseY: 120, r: 60, h: 70, hue: 150 },
+        { baseY: 80, r: 44, h: 55, hue: 160 },
+        { baseY: 42, r: 28, h: 45, hue: 170 },
+      ];
+
+      for (const ccone of cones) {
+        const seg = 20;
+        for (let i = 0; i < seg; i++) {
+          const a1 = rot + (i / seg) * Math.PI * 2;
+          const a2 = rot + ((i + 1) / seg) * Math.PI * 2;
+          const x1 = Math.cos(a1) * ccone.r, z1 = Math.sin(a1) * ccone.r;
+          const x2 = Math.cos(a2) * ccone.r, z2 = Math.sin(a2) * ccone.r;
+          const apex = proj(0, ccone.baseY + ccone.h, 0);
+          const p1 = proj(x1, ccone.baseY, z1);
+          const p2 = proj(x2, ccone.baseY, z2);
+
+          // fake lighting by facing vs camera
+          const light = Math.max(0.25, 0.5 + Math.cos(a1) * 0.45);
+          g.fillStyle = `hsla(${ccone.hue},60%,${40 + light * 20}%,.95)`;
+          g.beginPath();
+          g.moveTo(apex.x, apex.y);
+          g.lineTo(p1.x, p1.y);
+          g.lineTo(p2.x, p2.y);
+          g.closePath();
+          g.fill();
+        }
+      }
+
+      animId.current = requestAnimationFrame(draw);
+    };
+
+    animId.current = requestAnimationFrame(draw);
+    return () => { if (animId.current) cancelAnimationFrame(animId.current); };
+  }, [kind, inView]);
+
   return (
     <article ref={cardRef} className="post-card">
-      {/* MEDIA (edge-to-edge, square corners) */}
-      <div className={`post-media ${isPortrait ? "tall" : ""}`}>
-        <img
-          src={post.image}
-          alt={post.title}
-          onLoad={(e) => {
-            const img = e.currentTarget;
-            setIsPortrait(img.naturalHeight >= img.naturalWidth * 0.95);
-          }}
-        />
+      {/* hairline ABOVE media (true background) */}
+      <div className="thin-bg-line" />
 
-        {/* TOP FROSTED FRAME (over image) */}
+      {/* MEDIA */}
+      <div ref={mediaBoxRef} className={`post-media ${isPortrait ? "tall" : ""}`}>
+        {kind === "image" && (
+          <img
+            src={post.image}
+            alt={post.title}
+            onLoad={(e) => {
+              const img = e.currentTarget;
+              setIsPortrait(img.naturalHeight >= img.naturalWidth * 0.95);
+            }}
+          />
+        )}
+        {kind === "proc" && <canvas ref={procRef} aria-label="Abstract artwork" />}
+        {kind === "model" && <canvas ref={modelRef} aria-label="Low-poly tree" />}
+
+        {/* TOP FROSTED GLASS (mirrors the bottom, icon row sits lower) */}
         <div className="head-glass">
           <div className="head-left">
             <div className="pfp">
@@ -114,14 +291,14 @@ export default function PostCard({
         </div>
       </div>
 
-      {/* super-thin true background line */}
+      {/* hairline BELOW media (true background) */}
       <div className="thin-bg-line" />
 
-      {/* BOTTOM FROSTED FRAME (below image) */}
+      {/* BOTTOM FROSTED GLASS (icon-only, 5 items) */}
       <footer className="foot-glass">
         <div className="actions-row">
-          {/* 1) Profile action (round) */}
-          <button className="miniact avatar-act" onClick={() => setMenuOpen((v) => !v)} aria-label="Profile actions">
+          {/* 1) Profile */}
+          <button className="miniact avatar-act" aria-label="Profile actions" onClick={() => setMenuOpen((v) => !v)}>
             <span className="pfp pfp--small">
               <img
                 src={"/avatar.jpg"}
@@ -131,31 +308,18 @@ export default function PostCard({
                 }}
               />
             </span>
-            <span>Profile</span>
+            <span className="sr-only">Profile</span>
           </button>
-
-          {/* 2) Engage */}
-          <button className="miniact flat">
-            <Heart /> <span>Engage</span>
-          </button>
-
+          {/* 2) Like */}
+          <button className="miniact flat" aria-label="Engage"><Heart /></button>
           {/* 3) Comment */}
-          <button className="miniact flat">
-            <Chat /> <span>Comment</span>
-          </button>
-
+          <button className="miniact flat" aria-label="Comment"><Chat /></button>
           {/* 4) Share */}
-          <button className="miniact flat">
-            <Share /> <span>Share</span>
-          </button>
-
+          <button className="miniact flat" aria-label="Share"><Share /></button>
           {/* 5) Enter world */}
-          <button className="miniact flat" onClick={handleEnterWorld}>
-            <Portal /> <span>Enter world</span>
-          </button>
+          <button className="miniact flat" aria-label="Enter world" onClick={handleEnterWorld}><Portal /></button>
         </div>
 
-        {/* tiny placeholder menu for the avatar action */}
         {menuOpen && (
           <div className="owner-menu" onMouseLeave={() => setMenuOpen(false)}>
             <button className="menu-item">Select…</button>
