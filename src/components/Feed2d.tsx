@@ -8,9 +8,7 @@ type Props = {
 export default function Feed2D({ posts, onOpenWorld }: Props) {
   return (
     <div className="feed-screen">
-      {/* subtle grid / rails in the background */}
       <div className="feed-rail-bg" aria-hidden />
-
       <div className="feed">
         {posts.map((p) => (
           <article key={p.id} className="card frosted">
@@ -22,7 +20,6 @@ export default function Feed2D({ posts, onOpenWorld }: Props) {
             <h3 className="post-title">{p.title}</h3>
 
             <div className="media">
-              {/* placeholder art block; click to enter world */}
               <div
                 className="fake-img"
                 role="img"
@@ -33,9 +30,7 @@ export default function Feed2D({ posts, onOpenWorld }: Props) {
             </div>
 
             <footer className="post-actions">
-              <button className="chip" onClick={() => onOpenWorld(p)}>
-                Enter world
-              </button>
+              <button className="chip" onClick={() => onOpenWorld(p)}>Enter world</button>
               <button className="chip">Like</button>
               <button className="chip">Share</button>
             </footer>
