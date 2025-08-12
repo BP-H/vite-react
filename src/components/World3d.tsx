@@ -4,7 +4,6 @@ import { Float, Html, OrbitControls, Stars } from "@react-three/drei";
 import * as THREE from "three";
 
 export type Post = { id: string; title: string; author: string };
-
 type Props = { post: Post; onBack: () => void };
 
 function Wobbly({ color = "#6e6bff" }) {
@@ -42,13 +41,11 @@ export default function World3D({ post, onBack }: Props) {
         camera={{ position: [0, 0.8, 5.5], fov: 60 }}
         gl={{ antialias: true, powerPreference: "high-performance" }}
       >
-        {/* Bright white void */}
         <color attach="background" args={["#f7f8fb"]} />
         <fog attach="fog" args={["#f7f8fb", 10, 40]} />
         <ambientLight intensity={0.9} />
         <directionalLight position={[3, 4, 2]} intensity={0.75} />
         <Suspense fallback={null}>
-          {/* sparse dust-like stars so it still feels 2D */}
           <Stars radius={60} depth={20} count={800} factor={2} fade speed={0.15} />
           <Float speed={1} rotationIntensity={0.25} floatIntensity={0.6}>
             <group position={[0, 0.4, 0]}>
