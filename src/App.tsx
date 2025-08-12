@@ -1,11 +1,11 @@
-// src/App.tsx
 import { useCallback, useMemo, useState } from "react";
 import "./styles.css";
 import BackgroundVoid from "./three/BackgroundVoid";
 import Sidebar from "./components/Sidebar";
-import Feed2D, { Post } from "./components/Feed2D";
+import Feed2D from "./components/Feed2D";
 import World3D from "./components/World3D";
 import AssistantOrb from "./components/AssistantOrb";
+import { Post } from "./types";
 
 export default function App() {
   const [mode, setMode] = useState<"feed" | "world">("feed");
@@ -16,13 +16,9 @@ export default function App() {
     y: 0,
   });
 
-  const enterWorld = useCallback((p: Post, at?: { x: number; y: number }) => {
+  const portalNow = useCallback((p: Post, at: { x: number; y: number }) => {
     setSelected(p);
-    setBurst({
-      on: true,
-      x: at?.x ?? window.innerWidth / 2,
-      y: at?.y ?? window.innerHeight / 2,
-    });
+    setBurst({ on: true, x: at.x, y: at.y });
     setTimeout(() => {
       setMode("world");
       setBurst((b) => ({ ...b, on: false }));
@@ -32,34 +28,24 @@ export default function App() {
   const leaveWorld = useCallback(() => setMode("feed"), []);
 
   const overlayStyle = useMemo(
-    () =>
-      ({
-        "--px": `${burst.x}px`,
-        "--py": `${burst.y}px`,
-      }) as React.CSSProperties,
+    () => ({ "--px": `${burst.x}px`, "--py": `${burst.y}px` }) as React.CSSProperties,
     [burst.x, burst.y]
   );
 
-  // default orb portal target
-  const defaultPost: Post = {
-    id: -1,
-    author: "@proto_ai",
-    title: "Prototype Moment",
-    image: "",
-  };
-
   return (
     <div style={{ position: "relative" }}>
-      {/* living 3D background under everything */}
+      {/* 3D background */}
       <BackgroundVoid />
 
-      {/* UI layer */}
+      {/* UI */}
       <div className="apple-white-bg" style={{ position: "relative", zIndex: 1 }}>
         {mode === "feed" ? (
           <div className="app-root">
-            <Sidebar onOpen={() => enterWorld(defaultPost)} />
+            <Sidebar onOpen={() =>
+              portalNow({ id: -1, author: "@proto_ai", title: "Prototype Moment", image: "" }, { x: window.innerWidth - 60, y: window.innerHeight - 60 })
+            } />
             <main className="content">
-              <Feed2D onEnterWorld={enterWorld} />
+              <Feed2D onEnterWorld={portalNow} />
             </main>
           </div>
         ) : (
@@ -69,13 +55,10 @@ export default function App() {
         )}
       </div>
 
-      {/* floating assistant orb (hidden on world) */}
-      <AssistantOrb
-        hidden={mode === "world"}
-        onOpen={(x, y) => enterWorld(defaultPost, { x, y })}
-      />
+      {/* Assistant orb (flies to a card then calls onPortal) */}
+      <AssistantOrb onPortal={portalNow} />
 
-      {/* expanding white portal */}
+      {/* expanding white portal mask */}
       <div className={`portal-overlay ${burst.on ? "on" : ""}`} style={overlayStyle} aria-hidden />
     </div>
   );
