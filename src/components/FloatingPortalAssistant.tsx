@@ -2,7 +2,6 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, ContactShadows } from '@react-three/drei';
 import { useRef } from 'react';
 
-// Use `any` to avoid relying on THREE types if they’re not resolved yet.
 function Orb() {
   const m = useRef<any>(null);
   useFrame((_, d) => {
