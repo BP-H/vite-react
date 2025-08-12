@@ -1,246 +1,123 @@
-// src/App.tsx
-import { Suspense, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Stars, Html, Float, OrbitControls } from "@react-three/drei";
-import * as THREE from "three";
+import { useCallback, useMemo, useRef, useState } from "react";
+import "./styles.css";
+import Feed2D, { PostCard } from "./components/Feed2D";
+import World3D from "./components/World3D";
 
-/* -------------------- demo content -------------------- */
-type Post = { id: string; title: string; author: string };
-const demo: Post[] = [
-  { id: "1", title: "Prototype Moment", author: "@proto_ai" },
-  { id: "2", title: "Symbolic Feed", author: "@neonfork" },
-  { id: "3", title: "Ocean Study", author: "@superNova_2177" },
-];
+type Mode = "feed" | "world";
 
-/* -------------------- WHITE background void (feed) -------------------- */
-function WhiteVoid() {
-  return (
-    <Canvas
-      dpr={[1, 2]}
-      camera={{ position: [0, 0, 6], fov: 60 }}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 0,
-        pointerEvents: "none",
-      }}
-    >
-      <color attach="background" args={["#ffffff"]} />
-      <fog attach="fog" args={["#ffffff", 60, 160]} />
+export default function App() {
+  const [mode, setMode] = useState<Mode>("feed");
+  const [activePost, setActivePost] = useState<PostCard | null>(null);
 
-      {/* barely-there parallax so the frost has something to blur */}
-      <FaintRing />
-      <FaintPlane y={-2} />
-      <FaintPlane y={+2} />
-    </Canvas>
+  // Where the portal animation starts (mouse/touch position)
+  const portalFrom = useRef<{ x: number; y: number }>({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  const [portalOn, setPortalOn] = useState(false);
+
+  const posts = useMemo<PostCard[]>(
+    () => [
+      {
+        id: "p1",
+        handle: "@proto_ai",
+        title: "Prototype Moment",
+        demo: true,
+        world: "void",
+        palette: ["#ffffff", "#e8ecf7", "#dfe6f2"],
+      },
+      {
+        id: "p2",
+        handle: "@neonfork",
+        title: "Symbolic Feed",
+        demo: true,
+        world: "knots",
+        palette: ["#0f1220", "#22263b", "#6a73ff"],
+      },
+      {
+        id: "p3",
+        handle: "@superNova_2177",
+        title: "Ocean Study",
+        demo: true,
+        world: "ocean",
+        palette: ["#edf7ff", "#cbe8ff", "#7bb3ff"],
+      },
+    ],
+    []
   );
-}
 
-function FaintRing() {
-  const ref = useRef<THREE.Mesh | null>(null);
-  useFrame((_, dt) => {
-    if (ref.current) ref.current.rotation.z += dt * 0.02;
-  });
-  return (
-    <mesh ref={ref} position={[0, 0, -14]}>
-      <torusGeometry args={[10, 0.06, 8, 280]} />
-      <meshBasicMaterial color="#e9f0ff" transparent opacity={0.18} />
-    </mesh>
-  );
-}
-function FaintPlane({ y }: { y: number }) {
-  const ref = useRef<THREE.Mesh | null>(null);
-  useFrame((_, dt) => {
-    if (!ref.current) return;
-    ref.current.position.x = Math.sin(performance.now() * 0.0002 + y) * 1.2;
-  });
-  return (
-    <mesh ref={ref} position={[0, y, -10]}>
-      <planeGeometry args={[40, 10]} />
-      <meshBasicMaterial color="#f3f7ff" transparent opacity={0.35} />
-    </mesh>
-  );
-}
+  const enterWorld = useCallback((post: PostCard, start: { x: number; y: number }) => {
+    portalFrom.current = start;
+    setActivePost(post);
+    setPortalOn(true);
+    // Wait for the portal animation to expand, then switch to world
+    window.setTimeout(() => {
+      setPortalOn(false);
+      setMode("world");
+    }, 700);
+  }, []);
 
-/* -------------------- 3D WORLD (after portal) -------------------- */
-function WobblyKnot() {
-  const ref = useRef<THREE.Mesh | null>(null);
-  useFrame((_, dt) => {
-    if (!ref.current) return;
-    ref.current.rotation.x += dt * 0.15;
-    ref.current.rotation.y += dt * 0.25;
-  });
-  return (
-    <mesh ref={ref} position={[0, 1.5, -2]}>
-      <torusKnotGeometry args={[0.8, 0.25, 128, 32]} />
-      <meshLambertMaterial color="#8a7cff" flatShading />
-    </mesh>
-  );
-}
-function RingPosts({ posts }: { posts: Post[] }) {
-  const R = 8;
-  return (
-    <group>
-      {posts.map((p, i) => {
-        const a = (i / posts.length) * Math.PI * 2;
-        const pos: [number, number, number] = [
-          Math.cos(a) * R,
-          Math.sin(i) * 0.2,
-          Math.sin(a) * R,
-        ];
-        return (
-          <Float key={p.id} speed={1.5} rotationIntensity={0.1} floatIntensity={0.6}>
-            <mesh position={pos}>
-              <planeGeometry args={[2.8, 1.6, 1, 1]} />
-              <meshLambertMaterial color="#22263b" wireframe flatShading />
-              <Html center transform distanceFactor={2.4}>
-                <div className="panel">
-                  <div style={{ fontWeight: 700 }}>{p.title}</div>
-                  <div style={{ opacity: 0.7 }}>{p.author}</div>
-                </div>
-              </Html>
-            </mesh>
-          </Float>
-        );
-      })}
-    </group>
-  );
-}
-function World3D({
-  posts,
-  selected,
-  onExit,
-}: {
-  posts: Post[];
-  selected: Post | null;
-  onExit: () => void;
-}) {
-  return (
-    <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
-      <Canvas
-        dpr={[1, 1.5]}
-        gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}
-        camera={{ fov: 65, position: [0, 1.2, 8] }}
-        shadows={false}
-        style={{ position: "fixed", inset: 0, zIndex: 1, pointerEvents: "auto" }}
-      >
-        <color attach="background" args={["#07080d"]} />
-        <fog attach="fog" args={["#07080d", 8, 22]} />
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[4, 6, 3]} intensity={0.6} />
-        <Suspense fallback={null}>
-          <Stars radius={60} depth={80} count={6000} factor={2} fade speed={1} />
-          <WobblyKnot />
-          <RingPosts posts={posts} />
-          <OrbitControls enablePan={false} />
-        </Suspense>
-      </Canvas>
+  const backToFeed = useCallback(() => {
+    // Reverse: world fades to white, shrink portal, show feed
+    setPortalOn(true);
+    window.setTimeout(() => {
+      setPortalOn(false);
+      setActivePost(null);
+      setMode("feed");
+    }, 600);
+  }, []);
 
-      {/* HUD */}
-      <div className="world-hud">
-        <div className="chip frost">Portal {selected ? `• ${selected.title}` : ""}</div>
-        <button className="btn-strong" onClick={onExit}>
-          Back to Feed
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* -------------------- FEED (2D over white void) -------------------- */
-function Feed2D({
-  posts,
-  onOpenWorld,
-  portalizing,
-}: {
-  posts: Post[];
-  onOpenWorld: (p: Post) => void;
-  portalizing: boolean;
-}) {
   return (
-    <div className={`feed-shell ${portalizing ? "to-void" : ""}`}>
-      {/* faint grid hint */}
-      <div className="grid-overlay" aria-hidden />
+    <div className="app-root apple-white-bg">
+      {/* Sidebar (kept minimal and light, Apple-like) */}
+      <aside className="sidebar">
+        <div className="sidebar-inner">
+          <div className="brand">superNova_2177</div>
+          <button
+            className="siri-orb"
+            onClick={(e) =>
+              enterWorld(posts[0], { x: (e.clientX ?? window.innerWidth / 2), y: (e.clientY ?? 0) })
+            }
+            aria-label="Open Portal"
+          >
+            Open Portal
+          </button>
 
-      {/* sidebar */}
-      <aside className="sidebar frost">
-        <strong style={{ fontSize: 18 }}>Sidebar</strong>
-        <button className="btn" onClick={() => onOpenWorld(posts[0])}>
-          Open Portal
-        </button>
+          <nav className="side-links">
+            <span className="section">Spaces</span>
+            <a>AccessAI Tech</a>
+            <a>superNova_2177</a>
+            <a>GLOBALRUNWAY</a>
+            <span className="section">Navigate</span>
+            <a>Feed</a>
+            <a>Messages</a>
+            <a>Profile</a>
+            <a>Proposals</a>
+            <a>Decisions</a>
+            <a>Execution</a>
+          </nav>
+        </div>
       </aside>
 
-      {/* feed rail */}
-      <main className="rail">
-        <div className="stack">
-          {posts.map((p, idx) => (
-            <article key={p.id} className={`card frost floating-${(idx % 3) + 1}`}>
-              <header className="row">
-                <strong>{p.author}</strong>
-                <span className="muted">• demo</span>
-              </header>
+      <main className="content">
+        {mode === "feed" && (
+          <Feed2D posts={posts} onEnterWorld={enterWorld} />
+        )}
 
-              <h3 className="title">{p.title}</h3>
-
-              {/* frost window that shows the white void behind */}
-              <div
-                className="media frost hover-lift"
-                role="img"
-                aria-label={`${p.title} preview`}
-                title="Enter world"
-                onClick={() => onOpenWorld(p)}
-              />
-
-              <footer className="row gap">
-                <button className="btn" onClick={() => onOpenWorld(p)}>
-                  Enter world
-                </button>
-                <button className="chip">Like</button>
-                <button className="chip">Share</button>
-              </footer>
-            </article>
-          ))}
-        </div>
+        {mode === "world" && activePost && (
+          <World3D key={activePost.id} post={activePost} onBack={backToFeed} />
+        )}
       </main>
 
-      {/* portal overlay on top of feed during transition */}
-      <div className={`portal-overlay ${portalizing ? "show" : ""}`} aria-hidden>
-        <div className="vortex" />
-      </div>
+      {/* Bright-white “sucked into the void” portal */}
+      <PortalOverlay active={portalOn} from={portalFrom.current} />
     </div>
   );
 }
 
-/* -------------------- App w/ “sucked into the void” transition -------------------- */
-export default function App() {
-  const [mode, setMode] = useState<"feed" | "world">("feed");
-  const [selected, setSelected] = useState<Post | null>(null);
-  const [portalizing, setPortalizing] = useState(false);
-
-  function startPortal(p: Post) {
-    setSelected(p);
-    setPortalizing(true);
-
-    // Wait while cards “suck” into the white void, then show world
-    window.setTimeout(() => {
-      setMode("world");
-      // fade the white overlay out after the world appears
-      window.setTimeout(() => setPortalizing(false), 400);
-    }, 950);
-  }
-
-  return (
-    <>
-      {/* layer 0: white void for feed & transition */}
-      {(mode === "feed" || portalizing) && <WhiteVoid />}
-
-      {/* layer 1: UI */}
-      {mode === "feed" ? (
-        <Feed2D posts={demo} onOpenWorld={startPortal} portalizing={portalizing} />
-      ) : (
-        <World3D posts={demo} selected={selected} onExit={() => setMode("feed")} />
-      )}
-    </>
-  );
+function PortalOverlay({ active, from }: { active: boolean; from: { x: number; y: number } }) {
+  // CSS variables drive the clip-path circle expansion from the click/touch
+  const style = {
+    // position in viewport coords
+    ["--px" as any]: `${from.x}px`,
+    ["--py" as any]: `${from.y}px`,
+  };
+  return <div className={`portal-overlay ${active ? "on" : ""}`} style={style} />;
 }
