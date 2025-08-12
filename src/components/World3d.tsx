@@ -37,12 +37,7 @@ function RingPosts({ posts }: { posts: Post[] }) {
           Math.sin(a) * R,
         ];
         return (
-          <Float
-            key={p.id}
-            speed={1.5}
-            rotationIntensity={0.1}
-            floatIntensity={0.6}
-          >
+          <Float key={p.id} speed={1.5} rotationIntensity={0.1} floatIntensity={0.6}>
             <mesh position={pos}>
               <planeGeometry args={[2.8, 1.6, 1, 1]} />
               <meshLambertMaterial color="#22263b" wireframe flatShading />
@@ -91,9 +86,7 @@ export default function World3D({ posts, selected, onExit }: Props) {
         ) : (
           <div className="world3d-tag">Portal</div>
         )}
-        <button className="btn-exit" onClick={onExit}>
-          Back to Feed
-        </button>
+        <button className="btn-exit" onClick={onExit}>Back to Feed</button>
       </div>
     </div>
   );
