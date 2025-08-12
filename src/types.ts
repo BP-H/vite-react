@@ -4,3 +4,9 @@ export type Post = {
   title: string;
   image: string;
 };
+declare global {
+  interface Window {
+    webkitSpeechRecognition?: any;
+  }
+}
+export {};
