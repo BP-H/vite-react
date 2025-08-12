@@ -19,21 +19,7 @@ function Orb() {
 
 export default function FloatingPortalAssistant() {
   return (
-    <div
-      style={{
-        position: 'fixed',
-        right: 16,
-        bottom: 16,
-        width: 280,
-        height: 180,
-        zIndex: 40,
-        borderRadius: 16,
-        overflow: 'hidden',
-        border: '1px solid var(--line)',
-        boxShadow: '0 18px 40px rgba(18,24,40,.18)',
-        background: '#0a0b10',
-      }}
-    >
+    <div className="floating-assistant">
       <Canvas camera={{ position: [0, 0, 3.2], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: false }}>
         <color attach="background" args={['#0a0b10']} />
         <ambientLight intensity={0.9} />
