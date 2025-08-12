@@ -2,7 +2,6 @@
 import { useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Float, ContactShadows } from "@react-three/drei";
-import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 
 /** Small helper shapes so the hero always renders (no external models). */
@@ -69,16 +68,16 @@ function Torus({ glass = false }: { glass?: boolean }) {
 }
 
 export default function PortalHero() {
-  const [disableFX, setDisableFX] = useState(false);
+  const [webglReady, setWebglReady] = useState(true);
 
   const onCreated = (state: any) => {
     const webgl2 = !!state.gl?.capabilities?.isWebGL2;
-    setDisableFX(!webgl2);
+    setWebglReady(webgl2);
   };
 
   return (
     <div style={wrapStyle}>
-      {/* background “glow” layers */}
+      {/* soft glows */}
       <div style={{ ...glowStyle, ...pinkGlow }} aria-hidden />
       <div style={{ ...glowStyle, ...blueGlow }} aria-hidden />
 
@@ -92,7 +91,6 @@ export default function PortalHero() {
         <ambientLight intensity={0.8} />
         <directionalLight position={[2, 3, 2]} intensity={0.8} />
 
-        {/* Floating cluster */}
         <Float speed={1} rotationIntensity={0.3} floatIntensity={0.8}>
           <group position={[-1.2, 0.2, 0]}>
             <Rock seed={1} />
@@ -110,27 +108,27 @@ export default function PortalHero() {
         </Float>
 
         <ContactShadows position={[0, -0.85, 0]} opacity={0.25} scale={10} blur={1.6} far={2} />
-
-        {!disableFX && (
-          <EffectComposer>
-            <Bloom intensity={0.6} luminanceThreshold={0.75} luminanceSmoothing={0.2} />
-          </EffectComposer>
-        )}
       </Canvas>
+
+      {!webglReady && (
+        <div style={fallback}>
+          Your browser disabled WebGL2. Showing a static card instead.
+        </div>
+      )}
     </div>
   );
 }
 
-/* ——— inline styles (kept here so this file works standalone) ——— */
+/* — inline styles — */
 const wrapStyle: React.CSSProperties = {
   position: "relative",
   width: "100%",
   height: 260,
   borderRadius: 16,
   overflow: "hidden",
-  border: "1px solid rgba(255,255,255,.08)",
+  border: "1px solid rgba(0,0,0,.06)",
   background: "linear-gradient(180deg, #0c0f16, #0a0d14)",
-  boxShadow: "0 24px 60px rgba(0,0,0,.45)",
+  boxShadow: "0 24px 60px rgba(0,0,0,.35)",
 };
 
 const glowStyle: React.CSSProperties = {
@@ -149,4 +147,13 @@ const pinkGlow: React.CSSProperties = {
 const blueGlow: React.CSSProperties = {
   background:
     "radial-gradient(55% 45% at 50% 30%, rgba(155,140,255,0.20) 0%, transparent 70%)",
+};
+
+const fallback: React.CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  display: "grid",
+  placeItems: "center",
+  color: "white",
+  fontWeight: 600,
 };
