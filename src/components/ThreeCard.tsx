@@ -26,7 +26,7 @@ export default function ThreeCard({ variant = 'knot' as 'knot' | 'cube' | 'ico' 
 }
 
 function Spinner({ variant }: { variant: 'knot' | 'cube' | 'ico' }) {
-  const m = useRef<THREE.Mesh>(null);
+  const m = useRef<THREE.Mesh | null>(null);
   useFrame((_, d) => {
     if (!m.current) return;
     m.current.rotation.x += 0.25 * d;

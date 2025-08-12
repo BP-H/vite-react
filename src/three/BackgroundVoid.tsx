@@ -5,7 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 
 /** super-light star field (no postprocessing, very mobile friendly) */
 function Stars({ count = 6000, radius = 70 }) {
-  const points = useRef<THREE.Points>(null);
+  const points = useRef<THREE.Points | null>(null);
 
   const positions = useMemo(() => {
     const arr = new Float32Array(count * 3);
@@ -41,7 +41,7 @@ function Stars({ count = 6000, radius = 70 }) {
 
 /** a slow-spinning torus-knot as an anchor in the void */
 function Knot() {
-  const mesh = useRef<THREE.Mesh>(null);
+  const mesh = useRef<THREE.Mesh | null>(null);
   useFrame((_, dt) => {
     if (!mesh.current) return;
     mesh.current.rotation.x += dt * 0.25;
