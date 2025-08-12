@@ -1,104 +1,187 @@
 :root{
-  --bg-0:#ffffff;
-  --bg-1:#f6f7f9;
-  --bg-2:#eef1f5;
-
-  --ink-0:#0e1220;
-  --ink-1:#3c4457;
-  --ink-2:#78819a;
-
-  --pink:#ff1fbf;
-  --blue:#00d1ff;
-  --focus:rgba(0,209,255,.24);
-
-  --line:#e7ebf3;
-  --line-2:#dde3ee;
-
-  --r-lg:18px;
-  --r-md:14px;
-  --r-sm:10px;
-  --gap:16px;
+  --ink-0:#e9ecf1;
+  --ink-1:#cfd5df;
+  --ink-2:#97a1b6;
+  --line:rgba(255,255,255,.12);
 }
 
 *{ box-sizing:border-box; }
-html,body,#root{ height:100%; }
+html, body, #root { height:100%; }
 body{
   margin:0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;
-  color:var(--ink-0);
-  background:var(--bg-0);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  color: #0e1220;
+  background:#f7f8fb;
 }
 
-/* Layout */
-.header{
-  position:sticky; top:0; z-index:10;
-  display:flex; align-items:center; gap:12px;
-  height:56px; padding:0 14px;
-  background:rgba(255,255,255,.8);
-  backdrop-filter: blur(8px) saturate(140%);
-  border-bottom:1px solid var(--line);
-}
-.header__brand{ font-weight:800; letter-spacing:.2px; }
-.header__spacer{ flex:1; }
-.btn{
-  --h:38px; height:var(--h);
-  padding:0 14px; border-radius:var(--r-sm);
-  border:1px solid var(--line-2);
-  background:#fff; color:var(--ink-0); font-weight:600;
-  display:inline-flex; align-items:center; gap:8px; cursor:pointer;
-}
-.btn--primary{
-  background:linear-gradient(90deg, var(--pink), var(--blue));
-  color:#fff; border:0;
-}
+/* stage backgrounds (feed vs void) */
+.stage.stage--feed{ transition: background .6s ease; background:#f7f8fb; }
+.stage.stage--void{ background:#07080d; }
 
+/* --- Light shell layout (Apple-y) ------------------------------------ */
 .shell{
-  max-width:1280px; margin:16px auto; padding:0 16px;
-  display:grid; gap:var(--gap);
-  grid-template-columns:272px 1fr 312px;
+  display:grid;
+  grid-template-columns: 260px 1fr;
+  grid-template-rows: 56px 1fr;
+  grid-template-areas: "sidebar header" "sidebar main";
+  height:100vh;
 }
-@media (max-width:1200px){ .shell{ grid-template-columns:256px 1fr; } .right{ display:none; } }
-@media (max-width:900px){ .shell{ grid-template-columns:1fr; } .left{ display:none; } }
+.sidebar{
+  grid-area: sidebar;
+  background:#ffffff;
+  border-right:1px solid rgba(9,14,25,.08);
+  padding:16px;
+}
+.sidebar .brand{
+  font-weight:800;
+  letter-spacing:.2px;
+  margin-bottom:12px;
+}
+.nav-item{
+  display:block;
+  padding:8px 6px;
+  color:#0d1220;
+  text-decoration:none;
+  border-radius:8px;
+}
+.nav-item:hover{
+  background:rgba(10,15,25,.06);
+}
+.header{
+  grid-area: header;
+  position:sticky; top:0;
+  display:flex; align-items:center; gap:12px;
+  background:rgba(255,255,255,.75);
+  backdrop-filter:saturate(1.2) blur(10px);
+  border-bottom:1px solid rgba(9,14,25,.08);
+  padding:0 16px;
+  z-index:5;
+}
+.header-title{ font-weight:700; }
+.search{
+  margin-left:auto;
+  height:34px; padding:0 12px; border-radius:10px;
+  border:1px solid rgba(9,14,25,.12);
+  min-width:220px;
+}
+.main{
+  grid-area: main;
+  overflow:auto;
+  position:relative;
+}
 
+/* --- Feed screen ------------------------------------------------------ */
+.feed-screen{
+  position:relative;
+  min-height:100%;
+}
+.feed-rail-bg{
+  position:absolute; inset:0;
+  background:
+    radial-gradient(50% 35% at 50% 0%, rgba(0,0,0,.04) 0%, transparent 70%),
+    repeating-linear-gradient(
+      to bottom,
+      rgba(12,16,28,.055) 0 1px,
+      transparent 1px 80px
+    ),
+    repeating-linear-gradient(
+      to right,
+      rgba(12,16,28,.055) 0 1px,
+      transparent 1px 80px
+    );
+  pointer-events:none;
+}
+.feed{
+  position:relative;
+  max-width:780px;
+  margin:24px auto 120px;
+  padding:0 20px;
+}
 .card{
-  background:var(--bg-1);
-  border:1px solid var(--line);
-  border-radius:var(--r-lg);
-  box-shadow:0 6px 18px rgba(18,24,40,.06), 0 1px 0 rgba(255,255,255,.8) inset;
-  overflow:hidden;
+  border-radius:16px;
+  border:1px solid rgba(9,14,25,.1);
+  background:#fff;
+  box-shadow:0 8px 28px rgba(10,15,25,.06);
 }
-.card--pad{ padding:12px; }
+.card.frosted{
+  background:rgba(255,255,255,.65);
+  border:1px solid rgba(9,14,25,.1);
+  box-shadow:0 10px 40px rgba(10,15,25,.08);
+  backdrop-filter: blur(12px) saturate(1.2);
+  padding:14px 14px 10px;
+  margin:16px 0;
+  color:#0e1220;
+}
+.post-head .muted{ color:rgba(0,0,0,.45); }
+.post-title{ margin:8px 0 10px; font-size:18px; }
+.media{ border-radius:12px; overflow:hidden; border:1px solid rgba(9,14,25,.08); }
+.fake-img{
+  height:200px;
+  background: linear-gradient(120deg,#eceff6,#e7ebf5);
+  cursor:pointer;
+}
+.post-actions{ display:flex; gap:8px; padding-top:10px; }
+.chip{
+  background:#f0f3fa;
+  border:1px solid rgba(9,14,25,.12);
+  border-radius:999px;
+  padding:6px 12px;
+  cursor:pointer;
+}
+.chip:hover{ background:#e9edf7; }
 
-.left .stack, .right .stack{ display:grid; gap:10px; }
-.left .nav button{
-  width:100%; text-align:left;
-  padding:10px 12px; border-radius:12px; border:1px solid var(--line);
-  background:#fff; font-weight:600; cursor:pointer;
+/* --- Portal FAB ------------------------------------------------------- */
+.portal-fab{
+  position:fixed;
+  right:24px; bottom:24px;
+  width:56px; height:56px; border-radius:50%;
+  border:1px solid rgba(9,14,25,.12);
+  background:#ffffff;
+  box-shadow:0 14px 36px rgba(10,15,25,.15);
+  display:grid; place-items:center;
+  z-index:100;
+  cursor:pointer;
+}
+.portal-fab .orb{
+  width:20px; height:20px; border-radius:50%;
+  background: radial-gradient(circle at 30% 30%, #c0b8ff, #7a6dff 60%, #564dff 100%);
+  filter:saturate(1.1);
+}
+.portal-fab:hover{ transform: translateY(-1px); }
+
+/* --- World 3D overlay ------------------------------------------------- */
+.world3d{ position:fixed; inset:0; }
+.world3d-ui{
+  position:fixed; top:12px; left:12px; display:flex; gap:10px; align-items:center; z-index:10;
+}
+.world3d-tag{
+  background:rgba(255,255,255,.06);
+  color:#e9ecf3;
+  border:1px solid rgba(255,255,255,.12);
+  padding:6px 10px; border-radius:10px;
+  backdrop-filter: blur(8px);
+}
+.btn-exit{
+  background:#ffffff;
+  color:#0e1220;
+  border:1px solid rgba(255,255,255,.2);
+  padding:6px 10px;
+  border-radius:10px;
+  cursor:pointer;
 }
 
-.feed{ display:grid; gap:16px; }
-
-/* Post */
-.post header{ margin-bottom:6px; }
-.post .muted{ color:var(--ink-2); }
-.post .img{ border-radius:12px; overflow:hidden; border:1px solid var(--line); }
-.post .img img{ display:block; width:100%; height:auto; }
-
-/* 3D cards: keep canvas above content but allow pointer through when needed */
-.canvasWrap{ border-radius:12px; overflow:hidden; border:1px solid var(--line); }
-
-/* App-specific styles moved from inline CSS */
+/* --- 3D panel label (for <Html /> in three) --------------------------- */
 .panel{
-  background:rgba(16,18,25,.65);
-  border:1px solid rgba(255,255,255,.08);
-  padding:10px 12px;
-  border-radius:12px;
-  color:#e9ecf1;
-  width:220px;
-  box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
-  backdrop-filter:blur(8px);
+  background: rgba(10,12,18,.75);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.1);
+  padding:8px 12px;
+  border-radius:10px;
+  backdrop-filter: blur(8px);
+  font-size:14px;
 }
 
+/* --- (old styles kept for compatibility; safe to keep) ---------------- */
 .hud-btn{
   background:#12182a;
   color:#fff;
@@ -107,7 +190,6 @@ body{
   padding:10px 12px;
   font-weight:700;
 }
-
 .floating-assistant{
   position:fixed;
   right:16px;
@@ -122,31 +204,15 @@ body{
   background:#0a0b10;
 }
 
-.toast-overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.4);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:50;
+/* --- Transition polish ------------------------------------------------ */
+.stage--feed .feed-screen{ animation: feedIn .35s ease both; }
+.stage--void .feed-screen{ animation: feedOut .35s ease forwards; }
+.stage--void .portal-fab{ display:none; }
+
+@keyframes feedOut{
+  to{ opacity:0; filter: blur(10px); transform: scale(.98); }
 }
-.toast{
-  background:#12182a;
-  color:#fff;
-  padding:16px 20px;
-  border-radius:12px;
-  min-width:200px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.35);
-  text-align:center;
-}
-.toast button{
-  margin-top:12px;
-  background:#fff;
-  color:#0e1220;
-  border:0;
-  border-radius:8px;
-  padding:6px 12px;
-  font-weight:600;
-  cursor:pointer;
+@keyframes feedIn{
+  from{ opacity:0; transform: translateY(6px); }
+  to{ opacity:1; transform: translateY(0); }
 }
