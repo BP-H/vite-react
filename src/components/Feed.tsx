@@ -42,7 +42,7 @@ function makeBatch(offset: number, size = 12): Post[] {
 /** --- shared canvas context ------------------------------------------- */
 type MiniScene = {
   id: number;
-  ref: React.RefObject<HTMLDivElement>; // store the native div ref
+  ref: React.RefObject<HTMLDivElement>;
   element: ReactNode;
   visible: boolean;
 };
@@ -280,12 +280,11 @@ export default function Feed() {
           gl={{ antialias: false, powerPreference: "high-performance" }}
         >
           {scenes
-            .filter((s) => s.visible)
+            .filter((s) => s.visible && s.ref.current) // only mount when non-null
             .map((s) => (
               <View
                 key={s.id}
-                // Cast once, right where drei expects it:
-                track={s.ref as unknown as React.MutableRefObject<HTMLElement>}
+                track={{ current: s.ref.current! } as React.MutableRefObject<HTMLElement>}
               >
                 {s.element}
               </View>
