@@ -20,6 +20,7 @@ function Orb() {
 export default function FloatingPortalAssistant() {
   return (
     <div
+      className="canvasWrap canvasWrap--dark canvasWrap--lg"
       style={{
         position: 'fixed',
         right: 16,
@@ -27,11 +28,7 @@ export default function FloatingPortalAssistant() {
         width: 280,
         height: 180,
         zIndex: 40,
-        borderRadius: 16,
-        overflow: 'hidden',
-        border: '1px solid var(--line)',
         boxShadow: '0 18px 40px rgba(18,24,40,.18)',
-        background: '#0a0b10',
       }}
     >
       <Canvas camera={{ position: [0, 0, 3.2], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: false }}>

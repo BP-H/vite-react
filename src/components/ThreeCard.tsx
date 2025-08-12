@@ -4,15 +4,7 @@ import { useRef } from 'react';
 
 export default function ThreeCard({ variant = 'knot' as 'knot' | 'cube' | 'ico' }) {
   return (
-    <div
-      style={{
-        borderRadius: 12,
-        overflow: 'hidden',
-        border: '1px solid var(--line)',
-        height: 280,
-        background: '#0a0b10',
-      }}
-    >
+    <div className="canvasWrap canvasWrap--dark" style={{ height: 280 }}>
       <Canvas camera={{ position: [0, 0, 3.2], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: false }}>
         <color attach="background" args={['#0a0b10']} />
         <ambientLight intensity={0.8} />

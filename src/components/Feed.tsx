@@ -61,20 +61,32 @@ function MiniPortal() {
   }
 
   return (
-    <div style={{
-      position:"relative", height:220, borderRadius:12, overflow:"hidden",
-      border:"1px solid var(--line)", background:"linear-gradient(180deg,#0c0f16,#0a0d14)"
-    }}>
-      <div style={{
-        position:"absolute", inset:-20, pointerEvents:"none", mixBlendMode:"screen",
-        background:"radial-gradient(60% 50% at 50% 35%, rgba(255,45,184,0.25) 0%, transparent 70%)",
-        filter:"blur(16px)"
-      }}/>
-      <div style={{
-        position:"absolute", inset:-20, pointerEvents:"none", mixBlendMode:"screen",
-        background:"radial-gradient(55% 45% at 50% 30%, rgba(155,140,255,0.20) 0%, transparent 70%)",
-        filter:"blur(18px)"
-      }}/>
+    <div
+      className="canvasWrap canvasWrap--dark"
+      style={{ position: "relative", height: 220, background: "linear-gradient(180deg,#0c0f16,#0a0d14)" }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: -20,
+          pointerEvents: "none",
+          mixBlendMode: "screen",
+          background:
+            "radial-gradient(60% 50% at 50% 35%, rgba(255,45,184,0.25) 0%, transparent 70%)",
+          filter: "blur(16px)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: -20,
+          pointerEvents: "none",
+          mixBlendMode: "screen",
+          background:
+            "radial-gradient(55% 45% at 50% 30%, rgba(155,140,255,0.20) 0%, transparent 70%)",
+          filter: "blur(18px)",
+        }}
+      />
 
       <Canvas camera={{ position: [0, 0, 3.2], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias:false, powerPreference:"high-performance" }}>
         <color attach="background" args={["#0a0b10"]} />
@@ -135,16 +147,15 @@ export default function Feed() {
             <span className="muted"> • {p.time}</span>
           </header>
 
-          <p style={{ margin: "8px 0 10px" }}>{p.text}</p>
+          <p className="post__text">{p.text}</p>
 
           {p.kind === "image" && (
-            <div className="media">
+            <div className="img">
               <img
                 src={p.image}
                 alt="post"
                 loading="lazy"
                 decoding="async"
-                style={{ display: "block", width: "100%", height: "auto" }}
               />
             </div>
           )}
@@ -159,10 +170,7 @@ export default function Feed() {
         </article>
       ))}
 
-      <div
-        ref={sentinelRef}
-        style={{ height: 44, display: "grid", placeItems: "center", color: "var(--ink-2)" }}
-      >
+      <div ref={sentinelRef} className="sentinel">
         {loading ? "Loading…" : hasMore ? "" : "— End —"}
       </div>
     </>

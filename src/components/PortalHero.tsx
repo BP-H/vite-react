@@ -19,7 +19,7 @@ function Knot() {
 
 export default function PortalHero() {
   return (
-    <div className="card" style={{ overflow: 'hidden', borderRadius: 12, border: '1px solid var(--line)', height: 260, background: '#0a0b10' }}>
+    <div className="card canvasWrap canvasWrap--dark" style={{ height: 260 }}>
       <Canvas camera={{ position: [0, 0, 3.2], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: false }}>
         <color attach="background" args={['#0a0b10']} />
         <ambientLight intensity={0.85} />

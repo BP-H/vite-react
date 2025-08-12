@@ -17,21 +17,15 @@ export default function Topbar() {
   }, []);
 
   return (
-    <header ref={ref} className="topbar" role="banner">
+    <header ref={ref} className="header" role="banner">
       <strong>superNova • vite</strong>
-      <div style={{ flex: 1 }} />
+      <div className="header__spacer" />
       <input
         placeholder="Search..."
         aria-label="Search"
-        style={{
-          height: 36,
-          padding: "0 12px",
-          borderRadius: 10,
-          border: "1px solid var(--line)",
-          background: "#fff",
-        }}
+        className="field"
       />
-      <div style={{ width: 8 }} />
+      <div className="spacer" />
       <a className="btn btn--primary" href="https://github.com/BP-H/vite-react" target="_blank" rel="noreferrer">
         Repo
       </a>
