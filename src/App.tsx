@@ -1,487 +1,317 @@
 // src/App.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Stars, Float, ContactShadows, Html } from "@react-three/drei";
+import { useEffect, useMemo, useRef, useState } from "react";
+import * as THREE from "three";
+import { Canvas } from "@react-three/fiber";
+import { Float, ContactShadows, OrbitControls, Html } from "@react-three/drei";
 
-/* -----------------------------------------------------------
-   Fullscreen star field behind everything (no interactions)
------------------------------------------------------------ */
-function GlobalBackground3D() {
-  return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
-      <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 2.5], fov: 60 }}>
-        <color attach="background" args={["#090a0f"]} />
-        <Stars radius={120} depth={80} count={12000} factor={3} fade speed={0.8} />
-      </Canvas>
-    </div>
-  );
-}
+type Post = {
+  id: string;
+  author: string;
+  time: string;
+  text: string;
+  image?: string;
+};
 
-/* -----------------------------------------------------------
-   Tiny 3D tile used inside feed posts
------------------------------------------------------------ */
-function KnotTile({ seed = 0 }: { seed?: number }) {
-  const mesh = useRef<any>(null);
-  useFrame((_, dt) => {
-    if (!mesh.current) return;
-    mesh.current.rotation.x += 0.3 * dt;
-    mesh.current.rotation.y -= 0.22 * dt;
-  });
-  return (
-    <Canvas
-      dpr={[1, 1.5]}
-      camera={{ position: [0, 0, 3], fov: 50 }}
-      gl={{ antialias: false, powerPreference: "high-performance" }}
-      style={{ width: "100%", height: 220, display: "block", borderRadius: 14 }}
-    >
-      <ambientLight intensity={0.9} />
-      <directionalLight position={[2, 3, 2]} intensity={0.9} />
-      <Float speed={1.1} rotationIntensity={0.35} floatIntensity={0.85}>
-        <mesh ref={mesh}>
-          <torusKnotGeometry args={[0.7, 0.2, 120, 16]} />
-          <meshStandardMaterial color="#b9b5ff" metalness={0.55} roughness={0.25} />
-        </mesh>
-      </Float>
-      <ContactShadows position={[0, -0.85, 0]} opacity={0.2} scale={10} blur={1.6} far={2} />
-    </Canvas>
-  );
-}
-
-/* -----------------------------------------------------------
-   Floating “Open Portal” (mini assistant) modal
------------------------------------------------------------ */
-function FloatingAssistant() {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        style={{
-          position: "fixed",
-          right: 20,
-          bottom: 20,
-          zIndex: 30,
-          padding: "10px 14px",
-          borderRadius: 14,
-          border: "1px solid rgba(255,255,255,.12)",
-          background: "linear-gradient(90deg,#ff2db8,#4f46e5)",
-          color: "#fff",
-          fontWeight: 700,
-          boxShadow: "0 8px 24px rgba(0,0,0,.35)",
-          cursor: "pointer",
-        }}
-      >
-        Open Portal
-      </button>
-
-      {open && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setOpen(false)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 50,
-            background: "rgba(5,7,12,.6)",
-            backdropFilter: "blur(6px)",
-            display: "grid",
-            placeItems: "center",
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              width: 520,
-              maxWidth: "92vw",
-              borderRadius: 24,
-              border: "1px solid rgba(255,255,255,.12)",
-              background: "rgba(16,18,27,.85)",
-              boxShadow: "0 20px 70px rgba(0,0,0,.45)",
-              overflow: "hidden",
-            }}
-          >
-            <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 4.2], fov: 55 }} style={{ height: 380 }}>
-              <color attach="background" args={["#0b0d14"]} />
-              <ambientLight intensity={0.85} />
-              <directionalLight position={[3, 2, 2]} intensity={0.9} />
-              <Float speed={1} rotationIntensity={0.25} floatIntensity={0.9}>
-                <mesh>
-                  <torusKnotGeometry args={[0.9, 0.25, 160, 24]} />
-                  <meshStandardMaterial color="#a78bfa" metalness={0.6} roughness={0.2} />
-                </mesh>
-              </Float>
-              <ContactShadows position={[0, -1.2, 0]} opacity={0.25} scale={14} blur={2} far={3} />
-              <Html center>
-                <div
-                  style={{
-                    padding: "6px 10px",
-                    borderRadius: 12,
-                    border: "1px solid rgba(255,255,255,.1)",
-                    background: "rgba(0,0,0,.35)",
-                    color: "#fff",
-                    fontWeight: 600,
-                    userSelect: "none",
-                  }}
-                >
-                  Tap backdrop to close
-                </div>
-              </Html>
-            </Canvas>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-/* -----------------------------------------------------------
-   Parallax: shared pointer + per-card float
------------------------------------------------------------ */
-function usePointerRef() {
-  const ref = useRef({ x: 0, y: 0 });
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      ref.current.x = (e.clientX / window.innerWidth) * 2 - 1; // -1..1
-      ref.current.y = (e.clientY / window.innerHeight) * 2 - 1;
-    };
-    window.addEventListener("mousemove", onMove, { passive: true });
-    return () => window.removeEventListener("mousemove", onMove);
-  }, []);
-  return ref;
-}
-
-function rand(seed: number) {
-  // tiny seeded rng
-  const x = Math.sin(seed * 9301 + 49297) * 233280;
-  return x - Math.floor(x);
-}
-
-function ParallaxCard({
-  seed,
-  children,
-  style,
-}: {
-  seed: number;
-  children: React.ReactNode;
-  style?: React.CSSProperties;
-}) {
-  const pointer = ParallaxCard.pointerRef!; // set by App (below)
-  const el = useRef<HTMLDivElement | null>(null);
-
-  // each card gets its own float rhythm & depth
-  const cfg = useMemo(() => {
-    const r = rand(seed);
-    return {
-      amp: 6 + r * 8, // px amplitude
-      depth: -6 + r * 12, // translateZ
-      rot: 2 + r * 3, // deg tilt
-      phase: r * Math.PI * 2,
-      speed: 0.7 + r * 0.8,
-    };
-  }, [seed]);
-
-  useEffect(() => {
-    let t = cfg.phase;
-    let raf = 0;
-    const tick = () => {
-      t += 0.016 * cfg.speed;
-      const px = pointer.current.x;
-      const py = pointer.current.y;
-      const floatY = Math.sin(t) * cfg.amp;
-      const tiltX = px * cfg.rot;
-      const tiltY = -py * cfg.rot;
-
-      if (el.current) {
-        el.current.style.transform = `translate3d(0, ${floatY}px, 0) rotateX(${tiltY}deg) rotateY(${tiltX}deg) translateZ(${cfg.depth}px)`;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [cfg, pointer]);
-
-  return (
-    <div
-      ref={el}
-      style={{
-        willChange: "transform",
-        ...style,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-// static slot for the shared pointer
-ParallaxCard.pointerRef = null as unknown as React.MutableRefObject<{ x: number; y: number }>;
-
-/* -----------------------------------------------------------
-   Feed types & generator
------------------------------------------------------------ */
-type FeedBase = { id: string; author: string; time: string; text: string };
-type Feed3D = FeedBase & { kind: "3d"; seed: number };
-type FeedImg = FeedBase & { kind: "img"; image: string; alt?: string };
-type FeedText = FeedBase & { kind: "text" };
-type FeedItem = Feed3D | FeedImg | FeedText;
-
-const AUTHORS = ["@proto_ai", "@neonfork", "@superNova_2177"];
-
-function makeBatch(offset: number, size = 12): FeedItem[] {
+// ------------------------------ demo feed -----------------------------------
+function makeBatch(offset: number, size = 8): Post[] {
   return Array.from({ length: size }).map((_, i) => {
     const n = offset + i;
-    const base: FeedBase = {
+    return {
       id: String(n),
-      author: AUTHORS[n % AUTHORS.length]!,
-      time: new Date(Date.now() - n * 5 * 60 * 1000).toLocaleString(),
+      author: ["@proto_ai", "@neonfork", "@superNova_2177"][n % 3],
+      time: new Date(Date.now() - n * 1000 * 60 * 7).toLocaleString(),
       text:
         n % 3 === 0
           ? "Low-poly moment — rotating differently in each instance as you scroll."
           : "Prototype feed — symbolic demo copy for layout testing.",
+      image: n % 2 === 0 ? `https://picsum.photos/seed/sn_${n}/960/540` : undefined,
     };
-    if (n % 4 === 0) return { ...base, kind: "3d", seed: n };
-    if (n % 2 === 0)
-      return { ...base, kind: "img", image: `https://picsum.photos/seed/sn_${n}/960/540`, alt: "post" };
-    return { ...base, kind: "text" };
   });
 }
 
-/* ===========================================================
-   APP
-=========================================================== */
-export default function App() {
-  const pointerRef = usePointerRef();
-  // expose pointer to ParallaxCard without context to keep single-file
-  ParallaxCard.pointerRef = pointerRef;
+// ----------------------------- 3D background --------------------------------
+function Starfield({ count = 3000 }) {
+  const positions = useMemo(() => {
+    const r = 60;
+    const arr = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      arr[i * 3 + 0] = (Math.random() - 0.5) * r * 2;
+      arr[i * 3 + 1] = (Math.random() - 0.5) * r * 2;
+      arr[i * 3 + 2] = (Math.random() - 0.5) * r * 2;
+    }
+    return arr;
+  }, [count]);
 
-  const [items, setItems] = useState<FeedItem[]>(() => makeBatch(0, 16));
+  return (
+    <points frustumCulled={false}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={positions.length / 3}
+          array={positions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      {/* @ts-ignore */}
+      <pointsMaterial color="#9b8cff" size={0.06} sizeAttenuation transparent opacity={0.65} depthWrite={false} />
+    </points>
+  );
+}
+
+function PortalKnot() {
+  return (
+    <Float speed={1.1} rotationIntensity={0.35} floatIntensity={0.9}>
+      <mesh castShadow receiveShadow>
+        <torusKnotGeometry args={[0.9, 0.28, 160, 24]} />
+        <meshStandardMaterial color="#b9b5ff" metalness={0.55} roughness={0.18} />
+      </mesh>
+    </Float>
+  );
+}
+
+// ------------------------------- App UI -------------------------------------
+export default function App() {
+  const [posts, setPosts] = useState<Post[]>(() => makeBatch(0, 10));
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  // Infinite scroll
+  // infinite scroll (demo)
   useEffect(() => {
     if (!sentinelRef.current) return;
     const io = new IntersectionObserver(
       (entries) => {
-        const e = entries[0];
-        if (!e.isIntersecting || loading || !hasMore) return;
-        setLoading(true);
-        setTimeout(() => {
-          const next = makeBatch(page * 16, 16);
-          setItems((prev) => [...prev, ...next]);
-          setPage((p) => p + 1);
-          if (page + 1 >= 10) setHasMore(false);
-          setLoading(false);
-        }, 220);
+        if (!entries[0].isIntersecting || !hasMore) return;
+        const next = makeBatch(page * 10, 10);
+        setPosts((p) => [...p, ...next]);
+        const np = page + 1;
+        setPage(np);
+        if (np >= 6) setHasMore(false);
       },
-      { rootMargin: "900px 0px 800px 0px" }
+      { rootMargin: "1200px 0px 800px 0px" }
     );
     io.observe(sentinelRef.current);
     return () => io.disconnect();
-  }, [page, loading, hasMore]);
-
-  const glass = {
-    background: "rgba(16,18,27,.75)",
-    border: "1px solid rgba(255,255,255,.10)",
-    boxShadow: "0 18px 50px rgba(0,0,0,.35)",
-    borderRadius: 18,
-    backdropFilter: "blur(8px) saturate(130%)",
-  } as const;
+  }, [page, hasMore]);
 
   return (
-    <>
-      <GlobalBackground3D />
-      <FloatingAssistant />
-
-      {/* Topbar */}
-      <header
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-          margin: "0 auto",
-          padding: "10px 12px",
-          maxWidth: 1280,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          ...glass,
-          background: "rgba(14,16,24,.6)",
-          borderRadius: 14,
-          border: "1px solid rgba(255,255,255,.08)",
-          marginTop: 10,
-        }}
+    <div>
+      {/* Fixed GPU background */}
+      <Canvas
+        className="bg3d"
+        camera={{ position: [0, 0, 10], fov: 55 }}
+        dpr={[1, 1.5]}
+        gl={{ antialias: false, powerPreference: "high-performance" }}
       >
-        <strong style={{ letterSpacing: 0.3 }}>GLOBALRUNWAYAI</strong>
-        <div style={{ flex: 1 }} />
-        <input
-          placeholder="Search posts, people, companies…"
-          style={{
-            height: 38,
-            minWidth: 260,
-            maxWidth: 460,
-            flex: 1,
-            borderRadius: 12,
-            padding: "0 12px",
-            border: "1px solid rgba(255,255,255,.14)",
-            background: "rgba(12,14,20,.6)",
-            color: "white",
-          }}
-        />
+        <color attach="background" args={["#070a12"]} />
+        <fog attach="fog" args={["#070a12", 20, 120]} />
+        <ambientLight intensity={0.7} />
+        <directionalLight position={[3, 4, 2]} intensity={0.8} />
+        <Starfield count={4200} />
+        <group position={[0, 0, -6]}>
+          <PortalKnot />
+          <ContactShadows position={[0, -1.4, 0]} opacity={0.2} scale={20} blur={1.8} far={3} />
+        </group>
+      </Canvas>
+
+      {/* Floating assistant button (opens full 3D) */}
+      <button className="assistant" onClick={() => setOpen(true)} title="Open the portal">
+        ✨ Open Portal
+      </button>
+
+      {/* Glass UI shell */}
+      <header className="topbar">
+        <div className="brand">GLOBALRUNWAYAI</div>
+        <input className="search" placeholder="Search posts, people…" />
+        <a className="cta" href="/3d">Launch 3D</a>
       </header>
 
-      {/* Scene shell with perspective so cards feel in depth */}
-      <main
-        style={{
-          position: "relative",
-          zIndex: 1,
-          maxWidth: 1280,
-          margin: "16px auto 80px",
-          padding: "0 8px",
-          display: "grid",
-          gap: 16,
-          gridTemplateColumns: "260px 1fr 300px",
-          perspective: "1100px",
-        }}
-      >
-        {/* Left rail */}
-        <aside style={{ display: "grid", gap: 12 }}>
-          <ParallaxCard seed={101} style={{ ...glass, padding: 12 }}>
-            <div style={{ fontWeight: 700 }}>taha_gungor</div>
-            <div style={{ opacity: 0.7, fontSize: 13 }}>artist • test_tech</div>
-          </ParallaxCard>
+      <main className="shell">
+        <aside className="left">
+          <div className="card profile">
+            <img src="/icon.png" width={48} height={48} alt="avatar" />
+            <div>
+              <div className="name">taha_gungor</div>
+              <div className="muted">artist · test_tech</div>
+            </div>
+          </div>
 
-          <ParallaxCard seed={102} style={{ ...glass, padding: 10, display: "grid", gap: 8 }}>
-            {["Feed", "Messages", "Proposals", "Decisions", "Execution", "Companies", "Settings"].map((l, i) => (
-              <button
-                key={l}
-                style={{
-                  height: 36,
-                  borderRadius: 10,
-                  border: "1px solid rgba(255,255,255,.10)",
-                  background: "rgba(10,12,18,.6)",
-                  color: "white",
-                  textAlign: "left",
-                  padding: "0 10px",
-                  cursor: "pointer",
-                }}
-              >
-                {l}
-              </button>
+          <nav className="card nav">
+            {["Feed", "Messages", "Proposals", "Decisions", "Execution", "Companies", "Settings"].map((l) => (
+              <button key={l} className="btn ghost">{l}</button>
             ))}
-          </ParallaxCard>
+          </nav>
+
+          <div className="card">
+            <div className="muted">Quick stats</div>
+            <div className="kpis">
+              <div><div className="k">2,302</div><div className="muted small">Profile views</div></div>
+              <div><div className="k">1,542</div><div className="muted small">Post reach</div></div>
+              <div><div className="k">12</div><div className="muted small">Companies</div></div>
+            </div>
+          </div>
         </aside>
 
-        {/* Center feed */}
-        <section style={{ display: "grid", gap: 16 }}>
-          <ParallaxCard seed={200} style={{ ...glass, overflow: "hidden" }}>
-            <KnotTile seed={0} />
-          </ParallaxCard>
-
-          {items.map((p) => {
-            const seed = Number(p.id) || 0;
-            return (
-              <ParallaxCard key={p.id} seed={seed} style={{ ...glass, padding: 12 }}>
-                <header style={{ marginBottom: 6 }}>
-                  <strong>{p.author}</strong>
-                  <span style={{ opacity: 0.6 }}> • {p.time}</span>
-                </header>
-                <p style={{ margin: "6px 0 10px" }}>{p.text}</p>
-
-                {p.kind === "img" && (
-                  <div
-                    style={{
-                      borderRadius: 14,
-                      overflow: "hidden",
-                      border: "1px solid rgba(255,255,255,.08)",
-                    }}
-                  >
-                    <img
-                      src={p.image}
-                      alt={p.alt ?? "post image"}
-                      style={{ display: "block", width: "100%", height: "auto" }}
-                      loading="lazy"
-                    />
-                  </div>
-                )}
-
-                {p.kind === "3d" && <KnotTile seed={p.seed} />}
-
-                <footer style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                  {["Like", "Comment", "Share"].map((t) => (
-                    <button
-                      key={t}
-                      style={{
-                        height: 34,
-                        padding: "0 12px",
-                        borderRadius: 999,
-                        border: "1px solid rgba(255,255,255,.12)",
-                        background: "rgba(12,14,20,.6)",
-                        color: "white",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </footer>
-              </ParallaxCard>
-            );
-          })}
-
-          <div
-            ref={sentinelRef}
-            style={{ height: 48, display: "grid", placeItems: "center", opacity: 0.7, color: "white" }}
-          >
-            {loading ? "Loading…" : hasMore ? " " : "— End —"}
+        <section className="center">
+          {/* hero dock */}
+          <div className="card hero">
+            <p className="muted">
+              Minimal UI, neon <b>superNova</b> accents. The 3D portal floats behind and the UI rides on glass.
+            </p>
+            <div className="row">
+              <a className="btn primary" href="/3d">Open Universe</a>
+              <button className="btn">Remix a Universe</button>
+            </div>
           </div>
+
+          {/* composer (demo) */}
+          <div className="card">
+            <label className="muted small">Share something…</label>
+            <textarea className="input" placeholder="Share something cosmic…" rows={3} />
+            <div className="row r">
+              <button className="btn">Post</button>
+            </div>
+          </div>
+
+          {/* feed */}
+          {posts.map((p) => (
+            <article key={p.id} className="card post">
+              <header className="postHead">
+                <strong>{p.author}</strong><span className="muted"> • {p.time}</span>
+              </header>
+              <p className="postText">{p.text}</p>
+              {p.image && (
+                <div className="media">
+                  <img src={p.image} alt="post" loading="lazy" decoding="async" />
+                </div>
+              )}
+              <footer className="row">
+                <button className="chip">Like</button>
+                <button className="chip">Comment</button>
+                <button className="chip">Share</button>
+              </footer>
+            </article>
+          ))}
+          <div ref={sentinelRef} className="sentinel">{hasMore ? "" : "— End —"}</div>
         </section>
 
-        {/* Right rail */}
-        <aside style={{ display: "grid", gap: 12 }}>
-          <ParallaxCard seed={301} style={{ ...glass, padding: 12 }}>
-            <div style={{ fontWeight: 700, marginBottom: 6 }}>Identity</div>
-            <div style={{ opacity: 0.7 }}>Switch modes and manage entities.</div>
-          </ParallaxCard>
-
-          <ParallaxCard seed={302} style={{ ...glass, padding: 12 }}>
-            <div style={{ fontWeight: 700, marginBottom: 6 }}>Company Control Center</div>
-            <div style={{ opacity: 0.7, marginBottom: 10 }}>
-              Spin up spaces, manage proposals, and ship pipelines.
+        <aside className="right">
+          <div className="card">
+            <div className="sectionTitle">Identity</div>
+            <div className="muted">Switch modes and manage entities.</div>
+          </div>
+          <div className="card">
+            <div className="sectionTitle">Company Control Center</div>
+            <div className="muted">Spin up spaces, manage proposals, and ship pipelines.</div>
+            <div className="stack">
+              <button className="btn primary">Create Company</button>
+              <button className="btn">Open Dashboard</button>
             </div>
-            <div style={{ display: "grid", gap: 8 }}>
-              <button
-                style={{
-                  height: 38,
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,.14)",
-                  background: "linear-gradient(90deg,#ff2db8,#4f46e5)",
-                  color: "white",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                Create Company
-              </button>
-              <button
-                style={{
-                  height: 38,
-                  borderRadius: 12,
-                  border: "1px solid rgba(255,255,255,.14)",
-                  background: "rgba(10,12,18,.6)",
-                  color: "white",
-                  cursor: "pointer",
-                }}
-              >
-                Open Dashboard
-              </button>
+          </div>
+          <div className="card">
+            <div className="sectionTitle">Shortcuts</div>
+            <div className="stack">
+              <button className="btn">New Proposal</button>
+              <button className="btn">Start Vote</button>
+              <button className="btn">Invite Member</button>
             </div>
-          </ParallaxCard>
+          </div>
         </aside>
       </main>
-    </>
+
+      {/* fullscreen portal modal */}
+      {open && (
+        <div className="modal" role="dialog" aria-modal="true" onClick={() => setOpen(false)}>
+          <Canvas camera={{ position: [0, 0, 6], fov: 55 }} dpr={[1, 1.5]} gl={{ antialias: false }}>
+            <color attach="background" args={["#070a12"]} />
+            <ambientLight intensity={0.85} />
+            <directionalLight position={[3, 2, 2]} intensity={0.9} />
+            <PortalKnot />
+            <OrbitControls enablePan={false} />
+            <Html center>
+              <div className="modalHint">Tap anywhere to close</div>
+            </Html>
+          </Canvas>
+        </div>
+      )}
+
+      {/* tiny stylesheet embedded so this is a single-file drop-in */}
+      <style>{`
+        :root{
+          --ink:#e9eef6; --muted:#a2a8b6; --line:rgba(255,255,255,.08);
+          --glass: rgba(16,18,27,.66); --glass-2: rgba(16,18,27,.78);
+          --pink:#ff2db8; --blue:#4f46e5;
+        }
+        *{box-sizing:border-box}
+        html,body,#root{height:100%}
+        body{margin:0; color:var(--ink); font:14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial}
+        /* background canvas behind everything */
+        .bg3d{ position:fixed !important; inset:0; z-index:0; pointer-events:none; }
+        /* floating assistant button */
+        .assistant{
+          position:fixed; right:18px; bottom:18px; z-index:3;
+          padding:10px 14px; border-radius:12px; border:1px solid var(--line);
+          background:linear-gradient(90deg, var(--pink), var(--blue)); color:#fff; font-weight:700; cursor:pointer;
+          box-shadow:0 10px 30px rgba(0,0,0,.35);
+        }
+        .topbar{
+          position:sticky; top:0; z-index:2; display:flex; align-items:center; gap:12px;
+          padding:10px 14px; border-bottom:1px solid var(--line); backdrop-filter:blur(10px) saturate(140%);
+          background:linear-gradient(180deg, rgba(10,12,18,.85), rgba(10,12,18,.55));
+        }
+        .brand{font-weight:900; letter-spacing:.3px}
+        .search{
+          flex:1; height:38px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.04);
+          color:var(--ink); padding:0 12px;
+        }
+        .cta{
+          display:inline-flex; align-items:center; height:38px; padding:0 12px; border-radius:12px; border:1px solid var(--line);
+          background:rgba(255,255,255,.06); color:var(--ink); text-decoration:none; font-weight:700;
+        }
+
+        .shell{ position:relative; z-index:1; display:grid; grid-template-columns:272px 1fr 320px; gap:16px; padding:16px; }
+        @media (max-width: 1100px){ .shell{ grid-template-columns:256px 1fr; } .right{display:none;} }
+        @media (max-width: 820px){ .shell{ grid-template-columns:1fr; } .left{display:none;} }
+
+        .card{
+          background:var(--glass); border:1px solid var(--line); border-radius:16px; overflow:hidden;
+          box-shadow:0 6px 18px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.05);
+          padding:12px;
+        }
+        .hero{ background:var(--glass-2) }
+        .row{ display:flex; gap:8px; align-items:center; }
+        .row.r{ justify-content:flex-end; }
+        .btn{
+          height:38px; padding:0 14px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.06);
+          color:var(--ink); font-weight:700; cursor:pointer;
+        }
+        .btn.primary{ background:linear-gradient(90deg, var(--pink), var(--blue)); color:#fff; border-color:transparent; }
+        .btn.ghost{ width:100%; justify-content:flex-start; }
+        .chip{ padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--ink); }
+
+        .profile{ display:flex; gap:10px; align-items:center; }
+        .name{ font-weight:800; }
+        .muted{ color:var(--muted) }
+        .muted.small{ font-size:12px }
+        .kpis{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+        .k{ font-weight:900; font-size:20px }
+
+        .post{ padding:12px }
+        .postHead{ margin-bottom:6px }
+        .postText{ margin:8px 0 10px 0 }
+        .media{ border-radius:12px; overflow:hidden; border:1px solid var(--line) }
+        .media img{ display:block; width:100%; height:auto }
+        .sectionTitle{ font-weight:800; margin-bottom:4px }
+        .stack{ display:grid; gap:8px }
+
+        .modal{ position:fixed; inset:0; z-index:4; background:rgba(7,10,18,.92) }
+        .modalHint{
+          padding:8px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.12);
+          background:rgba(20,22,30,.6); color:#fff; font:600 13px/1 system-ui;
+        }
+        .sentinel{ height:44px; display:grid; place-items:center; color:var(--muted) }
+      `}</style>
+    </div>
   );
 }
