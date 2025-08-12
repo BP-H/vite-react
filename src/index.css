@@ -121,3 +121,32 @@ body{
   box-shadow:0 18px 40px rgba(18,24,40,.18);
   background:#0a0b10;
 }
+
+.toast-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:50;
+}
+.toast{
+  background:#12182a;
+  color:#fff;
+  padding:16px 20px;
+  border-radius:12px;
+  min-width:200px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.35);
+  text-align:center;
+}
+.toast button{
+  margin-top:12px;
+  background:#fff;
+  color:#0e1220;
+  border:0;
+  border-radius:8px;
+  padding:6px 12px;
+  font-weight:600;
+  cursor:pointer;
+}
