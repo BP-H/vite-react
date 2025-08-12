@@ -1,5 +1,4 @@
-// Legacy placeholder: the new white feed lives in src/components/Feed2D.tsx.
-// Keeping this file minimal so TypeScript builds cleanly.
+// src/components/Feed.tsx
 export default function Feed() {
   return null;
 }
