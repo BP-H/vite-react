@@ -9,7 +9,7 @@ import {
   ReactNode,
   useCallback,
 } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { Float, ContactShadows, View, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -42,7 +42,7 @@ function makeBatch(offset: number, size = 12): Post[] {
 /** --- shared canvas context ------------------------------------------- */
 type MiniScene = {
   id: number;
-  ref: React.MutableRefObject<HTMLElement>; // non-nullable HTMLElement ref for <View track>
+  ref: React.MutableRefObject<HTMLElement>; // what <View track> expects
   element: ReactNode;
   visible: boolean;
 };
@@ -55,8 +55,11 @@ const MiniSceneContext = createContext<{
 
 /** --- tiny 3D card ----------------------------------------------------- */
 function MiniPortal() {
-  // NOTE: non-null assertion makes this a MutableRefObject<HTMLElement>
-  const ref = useRef<HTMLDivElement>(null!);
+  // Real DOM ref for the div (must be HTMLDivElement for React)
+  const domRef = useRef<HTMLDivElement>(null!);
+  // Bridge ref cast to what <View track> wants
+  const viewRef = domRef as unknown as React.MutableRefObject<HTMLElement>;
+
   const ctx = useContext(MiniSceneContext)!;
   const [id, setId] = useState<number | null>(null);
 
@@ -66,9 +69,10 @@ function MiniPortal() {
       () => new THREE.Color().setHSL((seed * 0.137) % 1, 0.25, 0.6),
       [seed]
     );
-    useEffect(() => {
-      // nothing here
-    }, []);
+    useFrame((_, d) => {
+      mesh.current.rotation.x += 0.25 * d;
+      mesh.current.rotation.y -= 0.18 * d;
+    });
     return (
       <mesh ref={mesh} castShadow receiveShadow>
         <icosahedronGeometry args={[0.35, 0]} />
@@ -78,6 +82,7 @@ function MiniPortal() {
   }
   function Torus() {
     const mesh = useRef<THREE.Mesh>(null!);
+    useFrame((_, d) => (mesh.current.rotation.y -= 0.35 * d));
     return (
       <mesh ref={mesh} castShadow receiveShadow>
         <torusKnotGeometry args={[0.26, 0.08, 100, 16]} />
@@ -113,25 +118,25 @@ function MiniPortal() {
         />
       </>
     );
-    const newId = ctx.register(ref, element);
+    const newId = ctx.register(viewRef, element);
     setId(newId);
     return () => ctx.unregister(newId);
-  }, [ctx]);
+  }, [ctx, viewRef]);
 
-  // observe visibility to pause when off-screen
+  // observe visibility to pause when off-screen (use the real DOM ref)
   useEffect(() => {
-    if (!ref.current || id === null) return;
+    if (!domRef.current || id === null) return;
     const io = new IntersectionObserver(
       ([e]) => ctx.setVisible(id, e.isIntersecting),
       { rootMargin: "200px 0px" }
     );
-    io.observe(ref.current);
+    io.observe(domRef.current);
     return () => io.disconnect();
   }, [ctx, id]);
 
   return (
     <div
-      ref={ref}
+      ref={domRef}
       style={{
         position: "relative",
         height: 220,
