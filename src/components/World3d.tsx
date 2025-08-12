@@ -3,11 +3,12 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { Stars, Html, Float, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import type { Post } from "../types";
+import { demoPosts } from "../types";
 
 type Props = {
-  posts: Post[];
-  selected: Post | null;
-  onExit: () => void;
+  posts?: Post[];
+  selected?: Post | null;
+  onExit?: () => void;
 };
 
 function WobblyKnot() {
@@ -56,6 +57,8 @@ function RingPosts({ posts }: { posts: Post[] }) {
 }
 
 export default function World3D({ posts, selected, onExit }: Props) {
+  const data = posts ?? demoPosts;
+
   return (
     <div className="world3d">
       <Canvas
@@ -73,7 +76,7 @@ export default function World3D({ posts, selected, onExit }: Props) {
         <Suspense fallback={null}>
           <Stars radius={60} depth={80} count={6000} factor={2} fade speed={1} />
           <WobblyKnot />
-          <RingPosts posts={posts} />
+          <RingPosts posts={data} />
           <OrbitControls enablePan={false} />
         </Suspense>
       </Canvas>
@@ -86,7 +89,7 @@ export default function World3D({ posts, selected, onExit }: Props) {
         ) : (
           <div className="world3d-tag">Portal</div>
         )}
-        <button className="btn-exit" onClick={onExit}>Back to Feed</button>
+        <button className="btn-exit" onClick={() => onExit?.()}>Back to Feed</button>
       </div>
     </div>
   );
