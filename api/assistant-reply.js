@@ -4,7 +4,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ ok: false, error: 'POST only' });
   }
   try {
-    const apiKey = (globalThis.process && globalThis.process.env && globalThis.process.env.OPENAI_API_KEY) || '';
+    // Prefer env var; fall back to client-supplied key (for dev).
+    const apiKey =
+      (globalThis.process && globalThis.process.env && globalThis.process.env.OPENAI_API_KEY) ||
+      (req.body && req.body.apiKey) || '';
+
     if (!apiKey) return res.status(500).json({ ok: false, error: 'Missing OPENAI_API_KEY' });
 
     const { q } = req.body || {};
@@ -14,14 +18,11 @@ export default async function handler(req, res) {
 
     const r = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are the SuperNOVA voice. Keep replies short (1–2 sentences).' },
+          { role: 'system', content: 'You are the SuperNOVA voice. Keep replies concise (1–2 sentences).' },
           { role: 'user', content: q },
         ],
         temperature: 0.7,
