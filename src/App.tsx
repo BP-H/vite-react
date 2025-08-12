@@ -12,8 +12,8 @@ const demo: Post[] = [
   { id: "3", title: "Ocean Study", author: "@superNova_2177" },
 ];
 
-/* -------------------- background void (shared) -------------------- */
-function BackgroundVoid() {
+/* -------------------- WHITE background void (feed) -------------------- */
+function WhiteVoid() {
   return (
     <Canvas
       dpr={[1, 2]}
@@ -26,33 +26,44 @@ function BackgroundVoid() {
         pointerEvents: "none",
       }}
     >
-      {/* deep, calm space */}
-      <color attach="background" args={["#0b0e14"]} />
-      <fog attach="fog" args={["#0b0e14", 40, 120]} />
+      <color attach="background" args={["#ffffff"]} />
+      <fog attach="fog" args={["#ffffff", 60, 160]} />
 
-      {/* subtle star field */}
-      <Stars
-        radius={70}
-        depth={60}
-        count={4500}
-        factor={1.6}
-        saturation={0}
-        fade
-        speed={0.15}
-      />
-
-      {/* faint wireframe ring just to suggest depth */}
-      <Float speed={0.4} rotationIntensity={0.06} floatIntensity={0.06}>
-        <mesh position={[0, 0, -12]} rotation={[0.4, 0.3, 0]}>
-          <torusKnotGeometry args={[8, 0.35, 100, 16]} />
-          <meshBasicMaterial color="#111827" wireframe transparent opacity={0.18} />
-        </mesh>
-      </Float>
+      {/* barely-there parallax so the frost has something to blur */}
+      <FaintRing />
+      <FaintPlane y={-2} />
+      <FaintPlane y={+2} />
     </Canvas>
   );
 }
 
-/* -------------------- small 3D bits for the world -------------------- */
+function FaintRing() {
+  const ref = useRef<THREE.Mesh | null>(null);
+  useFrame((_, dt) => {
+    if (ref.current) ref.current.rotation.z += dt * 0.02;
+  });
+  return (
+    <mesh ref={ref} position={[0, 0, -14]}>
+      <torusGeometry args={[10, 0.06, 8, 280]} />
+      <meshBasicMaterial color="#e9f0ff" transparent opacity={0.18} />
+    </mesh>
+  );
+}
+function FaintPlane({ y }: { y: number }) {
+  const ref = useRef<THREE.Mesh | null>(null);
+  useFrame((_, dt) => {
+    if (!ref.current) return;
+    ref.current.position.x = Math.sin(performance.now() * 0.0002 + y) * 1.2;
+  });
+  return (
+    <mesh ref={ref} position={[0, y, -10]}>
+      <planeGeometry args={[40, 10]} />
+      <meshBasicMaterial color="#f3f7ff" transparent opacity={0.35} />
+    </mesh>
+  );
+}
+
+/* -------------------- 3D WORLD (after portal) -------------------- */
 function WobblyKnot() {
   const ref = useRef<THREE.Mesh | null>(null);
   useFrame((_, dt) => {
@@ -67,7 +78,6 @@ function WobblyKnot() {
     </mesh>
   );
 }
-
 function RingPosts({ posts }: { posts: Post[] }) {
   const R = 8;
   return (
@@ -97,8 +107,6 @@ function RingPosts({ posts }: { posts: Post[] }) {
     </group>
   );
 }
-
-/* -------------------- 3D WORLD (after portal) -------------------- */
 function World3D({
   posts,
   selected,
@@ -140,19 +148,22 @@ function World3D({
   );
 }
 
-/* -------------------- 2D FEED over the void -------------------- */
+/* -------------------- FEED (2D over white void) -------------------- */
 function Feed2D({
   posts,
   onOpenWorld,
+  portalizing,
 }: {
   posts: Post[];
   onOpenWorld: (p: Post) => void;
+  portalizing: boolean;
 }) {
   return (
-    <div className="feed-shell">
-      {/* grid hint overlay */}
+    <div className={`feed-shell ${portalizing ? "to-void" : ""}`}>
+      {/* faint grid hint */}
       <div className="grid-overlay" aria-hidden />
-      {/* sidebar + rail */}
+
+      {/* sidebar */}
       <aside className="sidebar frost">
         <strong style={{ fontSize: 18 }}>Sidebar</strong>
         <button className="btn" onClick={() => onOpenWorld(posts[0])}>
@@ -160,6 +171,7 @@ function Feed2D({
         </button>
       </aside>
 
+      {/* feed rail */}
       <main className="rail">
         <div className="stack">
           {posts.map((p, idx) => (
@@ -171,7 +183,7 @@ function Feed2D({
 
               <h3 className="title">{p.title}</h3>
 
-              {/* this block is intentionally transparent+frosted so the void shows through */}
+              {/* frost window that shows the white void behind */}
               <div
                 className="media frost hover-lift"
                 role="img"
@@ -191,29 +203,41 @@ function Feed2D({
           ))}
         </div>
       </main>
+
+      {/* portal overlay on top of feed during transition */}
+      <div className={`portal-overlay ${portalizing ? "show" : ""}`} aria-hidden>
+        <div className="vortex" />
+      </div>
     </div>
   );
 }
 
-/* -------------------- App -------------------- */
+/* -------------------- App w/ “sucked into the void” transition -------------------- */
 export default function App() {
   const [mode, setMode] = useState<"feed" | "world">("feed");
   const [selected, setSelected] = useState<Post | null>(null);
+  const [portalizing, setPortalizing] = useState(false);
+
+  function startPortal(p: Post) {
+    setSelected(p);
+    setPortalizing(true);
+
+    // Wait while cards “suck” into the white void, then show world
+    window.setTimeout(() => {
+      setMode("world");
+      // fade the white overlay out after the world appears
+      window.setTimeout(() => setPortalizing(false), 400);
+    }, 950);
+  }
 
   return (
     <>
-      {/* layer 0: ever-present void behind everything */}
-      <BackgroundVoid />
+      {/* layer 0: white void for feed & transition */}
+      {(mode === "feed" || portalizing) && <WhiteVoid />}
 
       {/* layer 1: UI */}
       {mode === "feed" ? (
-        <Feed2D
-          posts={demo}
-          onOpenWorld={(p) => {
-            setSelected(p);
-            setMode("world");
-          }}
-        />
+        <Feed2D posts={demo} onOpenWorld={startPortal} portalizing={portalizing} />
       ) : (
         <World3D posts={demo} selected={selected} onExit={() => setMode("feed")} />
       )}
