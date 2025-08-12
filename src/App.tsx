@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import Feed2D from "./components/Feed2D";
-import World3D from "./components/World3D";
+import { Feed2D, World3D } from "./components";
 import "./portal.css";
 
 export type Post = { id: string; title: string; author: string };
@@ -23,7 +22,7 @@ export default function App() {
     const el = flashRef.current;
     if (el) {
       el.classList.remove("flash--run");
-      // force reflow so the animation restarts
+      // restart the white-flash animation
       // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       el.offsetHeight;
       el.classList.add("flash--run");
@@ -38,9 +37,7 @@ export default function App() {
 
   useEffect(() => {
     document.body.style.overflow = mode === "world" ? "hidden" : "auto";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
+    return () => { document.body.style.overflow = "auto"; };
   }, [mode]);
 
   return (
