@@ -1,6 +1,7 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { ContactShadows } from '@react-three/drei';
 import { useRef } from 'react';
+import * as THREE from 'three';
 
 export default function ThreeCard({ variant = 'knot' as 'knot' | 'cube' | 'ico' }) {
   return (
@@ -25,7 +26,7 @@ export default function ThreeCard({ variant = 'knot' as 'knot' | 'cube' | 'ico' 
 }
 
 function Spinner({ variant }: { variant: 'knot' | 'cube' | 'ico' }) {
-  const m = useRef<any>(null);
+  const m = useRef<THREE.Mesh>(null);
   useFrame((_, d) => {
     if (!m.current) return;
     m.current.rotation.x += 0.25 * d;
