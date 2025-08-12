@@ -4,7 +4,7 @@ import bus from "../../lib/bus";
 
 type XY = { x: number; y: number };
 
-// tiny inline placeholder (also nice for favicon)
+// Inline SVG placeholder (also nice for favicon)
 const AVATAR_PLACEHOLDER =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(
@@ -21,26 +21,26 @@ const AVATAR_PLACEHOLDER =
     </svg>`
   );
 
-// simple inline icons (keeps bundle tiny)
+// tiny inline icons
 const Heart = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-    <path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z" stroke="currentColor" strokeWidth="1.6" />
+    <path d="M12 20s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 5.65-7 10-7 10z" stroke="currentColor" strokeWidth="1.6"/>
   </svg>
 );
 const Chat = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-    <path d="M21 12a8 8 0 1 1-3.1-6.3L21 5v7z" stroke="currentColor" strokeWidth="1.6" />
+    <path d="M21 12a8 8 0 1 1-3.1-6.3L21 5v7z" stroke="currentColor" strokeWidth="1.6"/>
   </svg>
 );
 const Share = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-    <path d="M4 12v7a1 1 0 0 0 1 1h14M12 16l7-7m0 0h-5m5 0v5" stroke="currentColor" strokeWidth="1.6" />
+    <path d="M4 12v7a1 1 0 0 0 1 1h14M12 16l7-7m0 0h-5m5 0v5" stroke="currentColor" strokeWidth="1.6"/>
   </svg>
 );
 const Portal = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.6" />
-    <circle cx="12" cy="12" r="3" fill="currentColor" />
+    <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.6"/>
+    <circle cx="12" cy="12" r="3" fill="currentColor"/>
   </svg>
 );
 
@@ -55,7 +55,7 @@ export default function PostCard({
   const [isPortrait, setIsPortrait] = useState(false);
   const [showEngage, setShowEngage] = useState(false);
 
-  // hover target for voice “enter world”
+  // Voice “enter world” hover target
   useEffect(() => {
     const node = cardRef.current;
     if (!node) return;
@@ -65,30 +65,25 @@ export default function PostCard({
       bus.emit("feed:hover", {
         post,
         x: r.left + r.width * 0.82,
-        y: r.top + r.height * 0.6,
+        y: r.top + r.height * 0.62,
       });
     };
-
     node.addEventListener("pointerenter", onEnter);
-    return () => {
-      if (node) node.removeEventListener("pointerenter", onEnter);
-    };
+    return () => node.removeEventListener("pointerenter", onEnter);
   }, [post]);
 
   function handleEnterWorld() {
-    const node = cardRef.current;
-    const r = node?.getBoundingClientRect();
+    const r = cardRef.current?.getBoundingClientRect();
     const at: XY = r
       ? { x: r.left + r.width - 56, y: r.top + r.height - 56 }
       : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 
     bus.emit("orb:portal", { post, ...at });
-    // if you prefer bypassing bus: onPortal(post, at);
   }
 
   return (
-    <article ref={cardRef} className="post-card overlay-style">
-      {/* Media with overlays */}
+    <article ref={cardRef} className={`post-card ${showEngage ? "open" : ""}`}>
+      {/* Edge-to-edge media */}
       <div className={`post-media ${isPortrait ? "tall" : ""}`}>
         <img
           src={post.image}
@@ -99,47 +94,44 @@ export default function PostCard({
           }}
         />
 
-        {/* top-left circular badge like your sketch */}
+        {/* Top-left circular profile badge (consistent) */}
         <div className="post-user">
           <div className="badge">
             <img
               src={"/avatar.jpg"}
+              alt=""
               onError={(ev) => {
                 (ev.currentTarget as HTMLImageElement).src = AVATAR_PLACEHOLDER;
               }}
-              alt=""
             />
           </div>
           <span className="who">{post.author || "me"}</span>
         </div>
-
-        {/* subtle corner orb for vibe */}
-        <div className="corner-orb" />
       </div>
 
-      {/* title/caption on frosted glass strip */}
+      {/* Frosted caption strip */}
       <div className="post-caption">
         <h3>{post.title}</h3>
       </div>
 
-      {/* Actions with faint frosted separators above and below */}
-      <footer className={`post-actions ${showEngage ? "open" : ""}`}>
+      {/* Minimal actions (icon + label), frosted band with soft fades */}
+      <footer className="post-actions">
         <div className="actions-row">
-          <button className="miniact" onClick={() => setShowEngage((v) => !v)}>
+          <button className="miniact flat" onClick={() => setShowEngage((v) => !v)}>
             <Heart /> <span>Engage</span>
           </button>
-          <button className="miniact">
+          <button className="miniact flat">
             <Chat /> <span>Comment</span>
           </button>
-          <button className="miniact">
+          <button className="miniact flat">
             <Share /> <span>Share</span>
           </button>
-          <button className="miniact" onClick={handleEnterWorld}>
+          <button className="miniact flat" onClick={handleEnterWorld}>
             <Portal /> <span>Enter world</span>
           </button>
         </div>
 
-        {/* tray pops under actions when Engage toggled */}
+        {/* Quick actions tray */}
         <div className="engage-tray">
           <button className="chip">Thanks for sharing</button>
           <button className="chip">Love this</button>
