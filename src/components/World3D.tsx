@@ -1,63 +1,64 @@
-import { Suspense, useRef } from "react";
+// src/components/World3D.tsx
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, Html, OrbitControls, Stars } from "@react-three/drei";
+import { Float, Stars, OrbitControls, Html } from "@react-three/drei";
 import * as THREE from "three";
+import { Post } from "./Feed2D";
 
-export type Post = { id: string; title: string; author: string };
-type Props = { post: Post; onBack: () => void };
-
-function Spinner() {
-  const m = useRef<THREE.Mesh | null>(null);
+function Knot() {
+  const ref = (global as any)._snref ??= { current: null as THREE.Mesh | null };
   useFrame((_, dt) => {
-    if (!m.current) return;
-    m.current.rotation.x += 0.2 * dt;
-    m.current.rotation.y += 0.3 * dt;
+    if (!ref.current) return;
+    ref.current.rotation.x += dt * 0.25;
+    ref.current.rotation.y += dt * 0.15;
   });
   return (
-    <mesh ref={m}>
-      <torusKnotGeometry args={[0.9, 0.26, 160, 24]} />
-      <meshStandardMaterial color="#6e6bff" roughness={0.25} metalness={0.35} />
+    <mesh ref={ref}>
+      <torusKnotGeometry args={[1.2, 0.35, 120, 16]} />
+      <meshStandardMaterial color="#6a73ff" metalness={0.3} roughness={0.25} />
     </mesh>
   );
 }
 
-function WorldLabel({ text }: { text: string }) {
+export default function World3D({
+  selected,
+  onBack,
+}: {
+  selected: Post | null;
+  onBack: () => void;
+}) {
   return (
-    <Html center distanceFactor={6}>
-      <div className="world-label">{text}</div>
-    </Html>
-  );
-}
-
-export default function World3D({ post, onBack }: Props) {
-  return (
-    <div className="world">
-      <div className="world__hud">
-        <span className="badge">Portal • {post.title}</span>
-        <button className="chip" onClick={onBack}>Back to Feed</button>
+    <div className="world-wrap">
+      <div className="world-topbar">
+        <button className="pill" onClick={onBack}>Back to Feed</button>
+        {selected && <span className="crumb">Portal • {selected.title}</span>}
       </div>
 
       <Canvas
-        dpr={[1, 1.75]}
-        camera={{ position: [0, 0.8, 5.5], fov: 60 }}
-        gl={{ antialias: true, powerPreference: "high-performance" }}
+        dpr={[1, 1.5]}
+        camera={{ fov: 60, position: [0, 1.2, 6] }}
+        gl={{ antialias: true }}
       >
-        {/* “bright white void” look */}
-        <color attach="background" args={["#f7f8fb"]} />
-        <fog attach="fog" args={["#f7f8fb", 10, 40]} />
-        <ambientLight intensity={0.9} />
-        <directionalLight position={[3, 4, 2]} intensity={0.75} />
+        <color attach="background" args={["#07080d"]} />
+        <ambientLight intensity={0.6} />
+        <directionalLight position={[4, 6, 3]} intensity={0.6} />
+        <Stars radius={60} depth={80} count={6000} factor={2} fade speed={1} />
+        <Float speed={1} rotationIntensity={0.2} floatIntensity={0.6}>
+          <Knot />
+        </Float>
 
-        <Suspense fallback={null}>
-          <Stars radius={60} depth={20} count={800} factor={2} fade speed={0.15} />
-          <Float speed={1} rotationIntensity={0.25} floatIntensity={0.6}>
-            <group position={[0, 0.4, 0]}>
-              <Spinner />
-            </group>
-          </Float>
-          <WorldLabel text={`${post.author}`} />
-          <OrbitControls enablePan={false} />
-        </Suspense>
+        {/* label on the knot */}
+        {selected && (
+          <Html center>
+            <div style={{
+              background:"rgba(0,0,0,.6)", color:"#fff", padding:"6px 10px",
+              borderRadius:12, border:"1px solid rgba(255,255,255,.15)"
+            }}>
+              {selected.title} — {selected.author}
+            </div>
+          </Html>
+        )}
+
+        <OrbitControls enablePan={false} />
       </Canvas>
     </div>
   );
