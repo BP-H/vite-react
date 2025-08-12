@@ -12,7 +12,7 @@ const demo: Post[] = [
 ];
 
 function WobblyKnot() {
-  const ref = useRef<THREE.Mesh>(null);
+  const ref = useRef<THREE.Mesh | null>(null);
   useFrame((_, dt) => {
     if (!ref.current) return;
     ref.current.rotation.x += dt * 0.15;

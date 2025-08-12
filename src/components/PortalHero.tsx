@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import * as THREE from 'three';
 
 function Knot() {
-  const m = useRef<THREE.Mesh>(null);
+  const m = useRef<THREE.Mesh | null>(null);
   useFrame((_, d) => {
     if (!m.current) return;
     m.current.rotation.x += 0.25 * d;

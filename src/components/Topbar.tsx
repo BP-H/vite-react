@@ -2,7 +2,7 @@
 import { useLayoutEffect, useRef } from "react";
 
 export default function Topbar() {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
 
   // measure to set --topbar-h (handy if you make other sticky sections)
   useLayoutEffect(() => {
