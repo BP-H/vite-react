@@ -1,23 +1,13 @@
-// tiny app-wide event bus so Feed, Orb, and App can coordinate
-type Handler = (payload?: any) => void;
+type Handler<T = any> = (payload: T) => void;
+const map = new Map<string, Set<Handler>>();
 
-class Bus {
-  private map = new Map<string, Set<Handler>>();
-
-  on(event: string, handler: Handler) {
-    if (!this.map.has(event)) this.map.set(event, new Set());
-    this.map.get(event)!.add(handler);
-    return () => this.off(event, handler);
-  }
-
-  off(event: string, handler: Handler) {
-    this.map.get(event)?.delete(handler);
-  }
-
-  emit<T = any>(event: string, payload?: T) {
-    this.map.get(event)?.forEach((fn) => fn(payload));
-  }
+function on<T = any>(name: string, fn: Handler<T>) {
+  let set = map.get(name);
+  if (!set) { set = new Set(); map.set(name, set); }
+  set.add(fn as Handler);
+  return () => set!.delete(fn as Handler);
 }
-
-const bus = new Bus();
-export default bus;
+function emit<T = any>(name: string, payload: T) {
+  map.get(name)?.forEach((fn) => fn(payload));
+}
+export default { on, emit };
