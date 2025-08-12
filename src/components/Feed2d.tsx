@@ -1,75 +1,63 @@
-import React, { useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Html, OrbitControls } from "@react-three/drei";
+import React from "react";
 
 type Props = {
-  worldId: string;
-  onBack: () => void;
+  onOpenPortal: (worldId: string | null) => void;
 };
 
-function FloatingTile(props: { position: [number, number, number]; label: string }) {
-  const ref = useRef<THREE.Mesh>(null!);
-  useFrame((_, t) => {
-    if (!ref.current) return;
-    ref.current.position.y = props.position[1] + Math.sin(t + props.position[0]) * 0.2;
-    ref.current.rotation.z = Math.sin(t * 0.3) * 0.05;
-  });
+const CARDS = [
+  { id: "proto", author: "@proto_ai", title: "Prototype Moment" },
+  { id: "symbolic", author: "@neonfork", title: "Symbolic Feed" },
+  { id: "ocean", author: "@superNova_2177", title: "Ocean Study" },
+];
 
+export default function Feed2d({ onOpenPortal }: Props) {
   return (
-    <group>
-      <mesh ref={ref} position={props.position} castShadow>
-        <boxGeometry args={[2.8, 1.4, 0.08]} />
-        {/* Subtle gray so it reads in a white void */}
-        <meshStandardMaterial color="#d0d3d8" roughness={0.7} metalness={0.05} />
-      </mesh>
-      <Html center position={[props.position[0], props.position[1], props.position[2] + 0.12]}>
-        <div className="tile-label">{props.label}</div>
-      </Html>
-    </group>
-  );
-}
+    <div className="layout">
+      <aside className="sidebar">
+        <div className="sidebar-head">Sidebar</div>
+        <button className="btn primary" onClick={() => onOpenPortal("portal")}>
+          Open Portal
+        </button>
 
-export default function World3D({ worldId, onBack }: Props) {
-  return (
-    <div className="world-root">
-      <button className="back-pill" onClick={onBack}>
-        Back to Feed
-      </button>
+        <nav className="nav">
+          <div className="nav-section">Profile</div>
+          <button className="nav-item">My Worlds</button>
+          <button className="nav-item">Following</button>
+          <button className="nav-item">Discover</button>
+        </nav>
+      </aside>
 
-      <div className="world-title">Portal • {worldId}</div>
+      <main className="feed">
+        {CARDS.map((card) => (
+          <div className="card" key={card.id}>
+            <header className="card-header">
+              <div className="meta">
+                <span className="author">{card.author}</span>
+                <span className="dot">•</span>
+                <span className="demo">demo</span>
+              </div>
+              <h3 className="title">{card.title}</h3>
+            </header>
 
-      <Canvas
-        className="world-canvas"
-        shadows
-        camera={{ position: [0, 2.2, 6], fov: 45 }}
-        gl={{ antialias: true }}
-      >
-        {/* White void */}
-        <color attach="background" args={["#ffffff"]} />
-        <fog attach="fog" args={["#ffffff", 7, 26]} />
+            {/* Frosted glass placeholder "window" that feels 2D but hints 3D */}
+            <div className="frosted-window">
+              <div className="lowpoly-hint" />
+            </div>
 
-        <ambientLight intensity={0.6} />
-        <directionalLight
-          position={[4, 8, 6]}
-          intensity={1.2}
-          castShadow
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
-        />
-
-        {/* A few floating "posts" in 3D */}
-        <FloatingTile position={[-2.2, 0.2, 0]} label="@proto_ai • Prototype Moment" />
-        <FloatingTile position={[0.5, -0.3, -0.6]} label="@neonfork • Symbolic Feed" />
-        <FloatingTile position={[2.6, 0.4, 0.3]} label="@superNova_2177 • Ocean Study" />
-
-        {/* Center piece (low-poly torus knot) */}
-        <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
-          <torusKnotGeometry args={[0.9, 0.22, 160, 12]} />
-          <meshStandardMaterial color="#7c83ff" roughness={0.35} metalness={0.2} />
-        </mesh>
-
-        <OrbitControls enablePan={false} />
-      </Canvas>
+            <div className="card-actions">
+              <button
+                className="pill"
+                onClick={() => onOpenPortal(card.id)}
+                aria-label={`Enter world ${card.title}`}
+              >
+                Enter world
+              </button>
+              <button className="pill">Like</button>
+              <button className="pill">Share</button>
+            </div>
+          </div>
+        ))}
+      </main>
     </div>
   );
 }
