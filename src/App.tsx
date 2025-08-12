@@ -1,37 +1,46 @@
-import { useCallback, useState } from "react";
-import Feed2D from "./components/Feed2D";
-import World3D from "./components/World3D";
-import "./App.css";
+import { useEffect, useState } from "react";
+import Feed2d from "./components/Feed2d";
+import World3d from "./components/World3d";
 
 type Mode = "feed" | "portal";
 
 export default function App() {
   const [mode, setMode] = useState<Mode>("feed");
-  const [sucking, setSucking] = useState(false);
-  const [activeWorld, setActiveWorld] = useState<string | null>(null);
+  const [transitioning, setTransitioning] = useState(false);
+  const [worldId, setWorldId] = useState<string | null>(null);
 
-  const enterPortal = useCallback((worldId: string) => {
-    setActiveWorld(worldId);
-    // animate "sucked into bright white void", then switch scenes
-    setSucking(true);
-    setTimeout(() => {
+  function openPortal(nextWorldId: string | null) {
+    setWorldId(nextWorldId);
+    // White-void suck effect
+    setTransitioning(true);
+    window.setTimeout(() => {
       setMode("portal");
-      setSucking(false);
-    }, 1200);
-  }, []);
+      setTransitioning(false);
+    }, 700); // match CSS animation duration
+  }
 
-  const backToFeed = useCallback(() => {
-    setMode("feed");
-    setActiveWorld(null);
-  }, []);
+  function backToFeed() {
+    setTransitioning(true);
+    window.setTimeout(() => {
+      setMode("feed");
+      setTransitioning(false);
+    }, 500);
+  }
+
+  useEffect(() => {
+    document.body.classList.toggle("portal-mode", mode === "portal");
+  }, [mode]);
 
   return (
-    <div className={`app-root ${mode}`}>
+    <div className={`app ${mode === "feed" ? "feed-mode" : "portal-mode"}`}>
       {mode === "feed" ? (
-        <Feed2D sucking={sucking} onEnterPortal={enterPortal} />
+        <Feed2d onOpenPortal={openPortal} />
       ) : (
-        <World3D worldId={activeWorld ?? "prototype"} onBack={backToFeed} />
+        <World3d worldId={worldId} onBack={backToFeed} />
       )}
+
+      {/* Bright white void overlay during transitions */}
+      {transitioning && <div className="whiteout" aria-hidden="true" />}
     </div>
   );
 }
