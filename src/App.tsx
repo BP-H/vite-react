@@ -25,16 +25,7 @@ function WobblyKnot() {
   );
 }
 
-const panelStyle: React.CSSProperties = {
-  background: "rgba(16,18,25,.65)",
-  border: "1px solid rgba(255,255,255,.08)",
-  padding: "10px 12px",
-  borderRadius: 12,
-  color: "#e9ecf1",
-  width: 220,
-  boxShadow: "0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04)",
-  backdropFilter: "blur(8px)",
-};
+// panel styles moved to CSS (.panel)
 
 function RingPosts() {
   const R = 8;
@@ -53,7 +44,7 @@ function RingPosts() {
               <planeGeometry args={[2.8, 1.6, 1, 1]} />
               <meshLambertMaterial color="#22263b" wireframe flatShading />
               <Html center transform distanceFactor={2.4}>
-                <div style={panelStyle}>
+                <div className="panel">
                   <div style={{ fontWeight: 700 }}>{p.title}</div>
                   <div style={{ opacity: 0.7 }}>{p.author}</div>
                 </div>
@@ -66,14 +57,7 @@ function RingPosts() {
   );
 }
 
-const hudBtn: React.CSSProperties = {
-  background: "#12182a",
-  color: "#fff",
-  border: "1px solid #2b3146",
-  borderRadius: 12,
-  padding: "10px 12px",
-  fontWeight: 700,
-};
+// button styles moved to CSS (.hud-btn)
 
 export default function App() {
   return (
@@ -102,7 +86,7 @@ export default function App() {
       {/* HUD overlay (kept minimal for now) */}
       <div style={{ position: "relative", zIndex: 1 }}>
         <div style={{ position: "absolute", top: 16, left: 16 }}>
-          <button style={hudBtn} onClick={() => alert("VR mode next step 🚀")}>
+          <button className="hud-btn" onClick={() => alert("VR mode next step 🚀")}>
             Enter Metaverse (VR soon)
           </button>
         </div>
