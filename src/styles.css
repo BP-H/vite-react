@@ -24,6 +24,8 @@ body{
 /* ============ Layout ============ */
 .app-root{ display:grid; grid-template-columns: 280px 1fr; min-height:100vh; }
 .content{ padding:24px; }
+.layout{ display:flex; gap:16px; align-items:flex-start; }
+.content-col{ flex:1; min-width:0; }
 
 /* ============ Sidebar ============ */
 .sidebar{ border-right:1px solid var(--stroke); background:transparent; }
