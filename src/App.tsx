@@ -2,6 +2,7 @@
 import { Suspense, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Stars, Html, Float, OrbitControls } from "@react-three/drei";
+import * as THREE from "three";
 
 type Post = { id: string; title: string; author: string };
 const demo: Post[] = [
@@ -11,7 +12,7 @@ const demo: Post[] = [
 ];
 
 function WobblyKnot() {
-  const ref = useRef<any>(null);
+  const ref = useRef<THREE.Mesh>(null!);
   useFrame((_, dt) => {
     if (!ref.current) return;
     ref.current.rotation.x += dt * 0.15;
