@@ -1,3 +1,4 @@
+import BackgroundVoid from "../three/BackgroundVoid";
 import type { ReactNode } from "react";
 
 type Props = { children: ReactNode };
