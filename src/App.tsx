@@ -3,6 +3,8 @@ import { Suspense, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Stars, Html, Float, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
+import "./app/styles/tokens.css";
+import "./app/styles/global.css";
 
 type Post = { id: string; title: string; author: string };
 const demo: Post[] = [
@@ -46,8 +48,8 @@ function RingPosts() {
               <meshLambertMaterial color="#22263b" wireframe flatShading />
               <Html center transform distanceFactor={2.4}>
                 <div className="panel">
-                  <div style={{ fontWeight: 700 }}>{p.title}</div>
-                  <div style={{ opacity: 0.7 }}>{p.author}</div>
+                  <div className="panel-title">{p.title}</div>
+                  <div className="panel-author">{p.author}</div>
                 </div>
               </Html>
             </mesh>
@@ -58,11 +60,11 @@ function RingPosts() {
   );
 }
 
-// button styles moved to CSS (.hud-btn)
+// button styles moved to CSS (.nav-btn)
 
 export default function App() {
   return (
-    <div style={{ width: "100vw", height: "100vh", overflow: "hidden", background: "#07080d" }}>
+    <div className="app">
       {/* 3D VOID */}
       <Canvas
         dpr={[1, 1.5]} // balances crispness + perf
@@ -85,9 +87,9 @@ export default function App() {
       </Canvas>
 
       {/* HUD overlay (kept minimal for now) */}
-      <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ position: "absolute", top: 16, left: 16 }}>
-          <button className="hud-btn" onClick={() => alert("VR mode next step 🚀")}>
+      <div className="hud">
+        <div className="left-panel">
+          <button className="nav-btn" onClick={() => alert("VR mode next step 🚀")}>
             Enter Metaverse (VR soon)
           </button>
         </div>

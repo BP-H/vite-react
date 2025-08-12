@@ -1,0 +1,51 @@
+/* base reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;
+}
+
+.app {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--color-bg);
+}
+
+.hud {
+  position: relative;
+  z-index: 1;
+}
+
+.left-panel {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+}
+
+.nav-btn {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.panel-title {
+  font-weight: 700;
+}
+
+.panel-author {
+  opacity: 0.7;
+}
