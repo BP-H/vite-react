@@ -1,8 +1,9 @@
+// src/components/AssistantOrb.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import bus from "../lib/bus";
 import { Post } from "../types";
 
-/** minimal typings for Vercel build */
+/** minimal typings so TS/Vercel don't complain */
 declare global {
   interface Window {
     webkitSpeechRecognition?: any;
@@ -32,6 +33,7 @@ export default function AssistantOrb({
   const lastHoverRef = useRef<{ post: Post; x: number; y: number } | null>(null);
   const [flying, setFlying] = useState(false);
 
+  // keep dock in bottom-right on resize
   useEffect(() => {
     const onR = () => {
       const x = window.innerWidth - 76;
@@ -40,24 +42,34 @@ export default function AssistantOrb({
       if (!flying) setPos({ x, y });
     };
     window.addEventListener("resize", onR);
-    return () => window.removeEventListener("resize", onR);
+    return () => {
+      window.removeEventListener("resize", onR);
+    };
   }, [flying]);
 
-  useEffect(() => bus.on("feed:hover", (p) => (lastHoverRef.current = p)), []);
-
+  // remember the currently hovered card (so voice can act on it)
   useEffect(() => {
-    return bus.on("orb:portal", (payload: { post: Post; x: number; y: number }) => {
+    const off = bus.on("feed:hover", (p: { post: Post; x: number; y: number }) => {
+      lastHoverRef.current = p;
+    });
+    return off;
+  }, []);
+
+  // when feed asks the orb to portal, fly to that point then trigger the burst
+  useEffect(() => {
+    const off = bus.on("orb:portal", (payload: { post: Post; x: number; y: number }) => {
       setFlying(true);
       setPos({ x: payload.x, y: payload.y });
-      setTimeout(() => {
+      window.setTimeout(() => {
         onPortal(payload.post, { x: payload.x, y: payload.y });
         setPos({ ...dock.current });
-        setTimeout(() => setFlying(false), 350);
+        window.setTimeout(() => setFlying(false), 350);
       }, FLY_MS);
     });
+    return off;
   }, [onPortal]);
 
-  // Web Speech API (best-effort)
+  // Web Speech API (best effort)
   useEffect(() => {
     const Ctor: any = window.webkitSpeechRecognition || window.SpeechRecognition;
     if (!Ctor) return;
@@ -68,25 +80,25 @@ export default function AssistantOrb({
     rec.lang = "en-US";
     rec.onresult = (e: any) => {
       const t = Array.from(e.results as any)
-        .map((r: any) => r[0]?.transcript?.toLowerCase?.() || "")
+        .map((r: any) => (r?.[0]?.transcript || "").toLowerCase())
         .join(" ");
       if (t.includes("enter") && (t.includes("world") || t.includes("portal"))) {
         const p = lastHoverRef.current;
         if (p) bus.emit("orb:portal", p);
       }
     };
-    return () => rec && rec.stop && rec.stop();
+    return () => {
+      try { rec.stop(); } catch {}
+    };
   }, []);
 
   const toggleMic = () => {
     const rec = recRef.current;
     if (!rec) return;
-    if (micOn) {
-      try { rec.stop(); } catch {}
-      setMicOn(false);
-    } else {
-      try { rec.start(); setMicOn(true); } catch {}
-    }
+    try {
+      if (micOn) { rec.stop(); setMicOn(false); }
+      else { rec.start(); setMicOn(true); }
+    } catch {}
   };
 
   const style = useMemo(
