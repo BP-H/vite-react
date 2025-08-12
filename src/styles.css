@@ -246,3 +246,20 @@ body{
   padding: 8px 12px; background: rgba(20,22,32,.75); color: #fff; cursor: pointer;
   backdrop-filter: blur(10px) saturate(140%); box-shadow: 0 8px 20px rgba(0,0,0,.25);
 }
+
+/* Modern pill buttons (use className="pill") */
+.pill{
+  --bd: rgba(255,255,255,.14);
+  --bg: #111423;
+  --hover: rgba(255,75,208,.18);
+  display:inline-flex; align-items:center; gap:8px;
+  height:34px; padding:0 12px; border-radius:999px; border:1px solid var(--bd);
+  background:var(--bg); color:#e9ecf1; font-weight:600; cursor:pointer;
+  transition: box-shadow .15s, border-color .15s, transform .1s;
+}
+.pill:hover{
+  border-color: rgba(255,75,208,.45);
+  box-shadow:0 0 0 2px var(--hover) inset, 0 8px 20px rgba(0,0,0,.18);
+  transform: translateY(-1px);
+}
+
