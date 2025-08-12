@@ -280,15 +280,15 @@ export default function Feed() {
           gl={{ antialias: false, powerPreference: "high-performance" }}
         >
           {scenes
-            .filter((s) => s.visible && s.ref.current) // only mount when non-null
-            .map((s) => (
-              <View
-                key={s.id}
-                track={{ current: s.ref.current! } as React.MutableRefObject<HTMLElement>}
-              >
-                {s.element}
-              </View>
-            ))}
+            .filter((s) => s.visible && s.ref.current) // ensure non-null
+            .map((s) => {
+              const tracked = { current: s.ref.current! } as React.MutableRefObject<HTMLElement>;
+              return (
+                <View key={s.id} track={tracked}>
+                  {s.element}
+                </View>
+              );
+            })}
         </Canvas>
       </>
     </MiniSceneContext.Provider>
