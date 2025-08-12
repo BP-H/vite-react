@@ -1,30 +1,40 @@
-// /api/assistant-reply.ts
-export default async function handler(req: any, res: any) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ ok: false, error: "Method not allowed" });
+// api/assistant-reply.ts
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ ok: false, error: 'POST only' });
   }
-  const { apiKey, prompt } = (req.body || {});
-  if (!apiKey) return res.status(400).json({ ok: false, error: "Missing apiKey" });
-  if (!prompt) return res.status(400).json({ ok: false, error: "Missing prompt" });
 
   try {
-    const r = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) return res.status(500).json({ ok: false, error: 'Missing OPENAI_API_KEY' });
+
+    const { q } = req.body || {};
+    if (typeof q !== 'string' || !q.trim()) {
+      return res.status(400).json({ ok: false, error: 'Missing q' });
+    }
+
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        temperature: 0.3,
+        model: 'gpt-4o-mini',
         messages: [
-          { role: "system", content: "You are the SuperNOVA assistant orb. Reply in one or two concise sentences. No markdown." },
-          { role: "user", content: String(prompt).slice(0, 2000) },
+          { role: 'system', content: 'You are the SuperNOVA voice. Keep replies short (1–2 sentences). If user asks to change visuals (dark/light, orb count, orb color), still respond briefly.' },
+          { role: 'user', content: q },
         ],
+        temperature: 0.7,
       }),
     });
-    const data = await r.json();
-    if (!r.ok) return res.status(r.status).json({ ok: false, error: data?.error?.message || "Failed" });
-    const text = data?.choices?.[0]?.message?.content || "";
+
+    const j = await r.json();
+    const text: string = j?.choices?.[0]?.message?.content?.trim?.() || '';
     return res.status(200).json({ ok: true, text });
   } catch (e: any) {
-    return res.status(500).json({ ok: false, error: e?.message || "Network error" });
+    return res.status(500).json({ ok: false, error: e?.message || 'server error' });
   }
 }
