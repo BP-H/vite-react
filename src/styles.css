@@ -21,45 +21,46 @@ body{
     linear-gradient(180deg,#0f1117,#10131a);
 }
 
-/* keep the r3f bg from eating clicks */
+/* r3f canvases shouldn't eat clicks */
 .bg-void canvas, .apple-white-bg > canvas { pointer-events:none !important; }
-
-/* shell transparent so the feed shows through */
-.apple-white-bg{ background: transparent !important; }
 
 /* =========================================================
    Layout
    ========================================================= */
+.apple-white-bg{ background: transparent !important; }
 .app-root{ min-height:100vh; }
 .content{ padding:0; }
+
+/* **FULL-WIDTH FEED** pinned left */
 .feed-frame{
   position:relative; z-index:1;
-  display:flex; justify-content:flex-start;  /* pin left like IG/LinkedIn */
-  padding: 18px clamp(8px, 3vw, 24px) 80px;
+  display:flex; justify-content:flex-start;
+  padding:0 0 72px 0;    /* no side padding */
+  width:100%;
 }
 .feed-col{
-  width:min(760px, 100%);
+  width:100%;           /* edge-to-edge */
   display:flex; flex-direction:column;
-  gap:12px; /* the “thin line” between posts */
+  gap:0;                /* no physical gap; we paint a soft divider instead */
 }
 
 /* =========================================================
-   Post Card
+   Post Card — edge-to-edge image, no rounded corners.
    ========================================================= */
-.post-card{
-  border-radius:16px;
-  background: rgba(18,22,35,.55);
-  backdrop-filter: blur(14px) saturate(150%);
-  box-shadow: 0 12px 30px rgba(0,0,0,.25);
-  overflow:hidden;
+.post-card{ position:relative; background:transparent; }
+.post-card + .post-card::before{
+  /* Soft linear “divider” band between posts (not a line) */
+  content:""; position:absolute; left:0; right:0; top:-10px; height:10px;
+  background: linear-gradient(to bottom, rgba(255,255,255,.06), rgba(255,255,255,0));
+  pointer-events:none;
 }
 
-/* MEDIA */
+/* MEDIA: fully flush to edges, square corners */
 .post-media{ position:relative; }
-.post-media img{ width:100%; display:block; background:#0f1117; }
+.post-media img{ width:100%; display:block; }
 .post-media.tall img{ aspect-ratio: 4 / 5; object-fit: cover; }
 
-/* Top-left circular badge on media */
+/* Top-left circular profile badge (consistent, single) */
 .post-user{
   position:absolute; left:12px; top:12px; display:flex; align-items:center; gap:8px;
 }
@@ -74,75 +75,67 @@ body{
 .post-user .badge img{ width:100%; height:100%; object-fit:cover; display:block; }
 .post-user .who{
   font-weight:800; text-shadow:0 2px 12px rgba(0,0,0,.45);
-  background: rgba(15,18,30,.55);
-  backdrop-filter: blur(6px);
-  border-radius:10px; padding:4px 8px; border:1px solid rgba(255,255,255,.08);
+  background: rgba(15,18,30,.55); backdrop-filter: blur(6px);
+  border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:4px 8px;
 }
 
-/* little vibey orb bottom-right of media */
-.corner-orb{
-  position:absolute; right:18px; bottom:18px; width:64px; height:64px; border-radius:999px;
-  background: radial-gradient(120% 120% at 30% 30%, #8b5cf6, #3b82f6 65%, #06b6d4);
-  box-shadow: 0 12px 40px rgba(82,97,255,.45), inset 0 1px 0 rgba(255,255,255,.5);
-  opacity:.75;
+/* Caption — frosted strip below image */
+.post-caption{
+  padding:12px 14px 10px;
+  background: rgba(18,22,35,.55);
+  backdrop-filter: blur(14px) saturate(150%);
+  border-top: 1px solid rgba(255,255,255,.06);
 }
-
-/* Caption strip */
-.post-caption{ padding:12px 14px 10px; }
 .post-caption h3{ margin:0; font-weight:800; }
 
-/* Actions: icon + text, with frosted fades above/below */
+/* Actions band — minimal icon+label, no “real” buttons */
 .post-actions{
   position:relative;
   padding:8px 8px 6px;
   background: rgba(15,17,25,.55);
   backdrop-filter: blur(12px) saturate(140%);
+  border-top: 1px solid rgba(255,255,255,.06);
 }
 .post-actions::before,
 .post-actions::after{
-  content:""; position:absolute; left:0; right:0; height:12px;
-  pointer-events:none;
+  content:""; position:absolute; left:0; right:0; height:12px; pointer-events:none;
   background: linear-gradient(to bottom, rgba(255,255,255,.08), rgba(255,255,255,0));
 }
 .post-actions::before{ top:-12px; }
-.post-actions::after{
-  bottom:-12px;
-  transform: rotate(180deg);
-}
-.actions-row{
-  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
-}
+.post-actions::after{ bottom:-12px; transform: rotate(180deg); }
 
-/* minimal action */
+.actions-row{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+
+/* Flat action (icon + label only) */
 .miniact{
   display:inline-flex; align-items:center; gap:8px;
-  height:36px; padding:0 12px;
-  border-radius:12px; border:1px solid rgba(255,255,255,.10);
-  background:#121626; color:#e9ecf1; font-weight:600; cursor:pointer;
-  transition: box-shadow .15s, border-color .15s, transform .1s, background .15s;
+  height:32px; padding:0; border:0; background:transparent; color:#e9ecf1;
+  font-weight:600; cursor:pointer; opacity:.9;
+  transition: opacity .15s, transform .1s, color .15s;
 }
-.miniact:hover{
-  border-color: rgba(106,115,255,.45);
-  box-shadow:0 0 0 2px rgba(106,115,255,.18) inset, 0 8px 20px rgba(0,0,0,.18);
-  transform: translateY(-1px);
-}
+.miniact span{ opacity:.9; }
+.miniact:hover{ opacity:1; transform: translateY(-1px); color:#ffffff; }
 
-/* Engage tray pops below */
+/* Engage quick chips */
 .engage-tray{
   display:grid; grid-auto-flow:column; gap:8px;
   overflow:auto; padding:8px 2px 2px;
   max-height:0; opacity:0; transition:max-height .25s ease, opacity .2s ease;
 }
-.post-actions.open .engage-tray{ max-height:70px; opacity:1; }
+.post-card.open .engage-tray{ max-height:70px; opacity:1; }
 
 .chip{
-  --bd: rgba(255,255,255,.14);
   display:inline-flex; align-items:center; gap:6px;
-  height:32px; padding:0 12px; border-radius:999px;
-  border:1px solid var(--bd); background:#111423; color:#e9ecf1; font-weight:600;
-  white-space: nowrap; cursor:pointer;
+  height:28px; padding:0 12px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:#111423; color:#e9ecf1; font-weight:600; white-space:nowrap; cursor:pointer;
+  transition: box-shadow .15s, border-color .15s, transform .1s;
 }
-.chip:hover{ border-color: rgba(255,75,208,.45); box-shadow:0 0 0 2px rgba(255,75,208,.18) inset; transform: translateY(-1px); }
+.chip:hover{
+  border-color: rgba(255,75,208,.45);
+  box-shadow:0 0 0 2px rgba(255,75,208,.18) inset;
+  transform: translateY(-1px);
+}
 
 /* =========================================================
    Chat Dock (unchanged)
@@ -167,15 +160,9 @@ body{
 .bubble.user{ justify-self: end; background: rgba(99,102,241,.25); border: 1px solid rgba(99,102,241,.35); }
 .bubble.assistant{ justify-self: start; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); }
 .bubble.system{ justify-self: center; font-size: 12px; opacity: .8 }
-.chatdock-pill{
-  position: fixed; left: 50%; bottom: 88px; transform: translateX(-50%);
-  z-index: 60; border: 1px solid rgba(0,0,0,.15); border-radius: 999px;
-  padding: 8px 12px; background: rgba(20,22,32,.75); color: #fff; cursor: pointer;
-  backdrop-filter: blur(10px) saturate(140%); box-shadow: 0 8px 20px rgba(0,0,0,.25);
-}
 
 /* =========================================================
-   Assistant Orb (kept)
+   Assistant Orb + Portal (unchanged)
    ========================================================= */
 .assistant-orb{
   position:fixed; z-index:9998; width:56px; height:56px; border-radius:999px;
@@ -200,9 +187,6 @@ body{
   box-shadow:0 8px 20px rgba(0,0,0,.25); pointer-events:none;
 }
 
-/* =========================================================
-   Portal overlay (unchanged)
-   ========================================================= */
 .portal-overlay{
   position:fixed; inset:0; pointer-events:none; z-index:9999;
   --px:50vw; --py:50vh; --r0:0px;
