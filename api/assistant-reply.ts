@@ -4,7 +4,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ ok: false, error: 'POST only' });
   }
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = (globalThis.process && globalThis.process.env && globalThis.process.env.OPENAI_API_KEY) || '';
     if (!apiKey) return res.status(500).json({ ok: false, error: 'Missing OPENAI_API_KEY' });
 
     const { q } = req.body || {};
@@ -29,9 +29,9 @@ export default async function handler(req, res) {
     });
 
     const j = await r.json();
-    const text = j?.choices?.[0]?.message?.content?.trim?.() || '';
+    const text = (j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content || '').trim();
     return res.status(200).json({ ok: true, text });
   } catch (e) {
-    return res.status(500).json({ ok: false, error: e?.message || 'server error' });
+    return res.status(500).json({ ok: false, error: (e && e.message) || 'server error' });
   }
 }
