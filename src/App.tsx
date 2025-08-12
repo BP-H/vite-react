@@ -82,16 +82,10 @@ export default function App() {
       </header>
 
       <div className="shell">
-        {/* Left rail */}
         <aside className="left">
           <div className="card card--pad">
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <div
-                style={{
-                  width: 42, height: 42, borderRadius: 12,
-                  background: '#fff', border: '1px solid var(--line)',
-                }}
-              />
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: '#fff', border: '1px solid var(--line)' }} />
               <div>
                 <div style={{ fontWeight: 800 }}>taha_gungor</div>
                 <div style={{ color: 'var(--ink-2)' }}>artist • test_tech</div>
@@ -117,7 +111,6 @@ export default function App() {
           </div>
         </aside>
 
-        {/* Center feed */}
         <section className="center" style={{ display: 'grid', gap: 16 }}>
           <PortalHero />
 
@@ -168,7 +161,6 @@ export default function App() {
           </div>
         </section>
 
-        {/* Right rail */}
         <aside className="right">
           <div className="card card--pad">
             <div style={{ fontWeight: 700, marginBottom: 6 }}>Identity</div>
