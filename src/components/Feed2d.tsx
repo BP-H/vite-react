@@ -17,15 +17,12 @@ function Card({ post, onEnterWorld }: { post: Post; onEnterWorld: (p: Post)=>voi
       </header>
       <h3 className="card__title">{post.title}</h3>
 
-      {/* shimmering “frosted” placeholder area */}
       <div className="placeholder">
         <div className="placeholder__shimmer" />
       </div>
 
       <footer className="card__foot">
-        <button className="chip" onClick={() => onEnterWorld(post)}>
-          Enter world
-        </button>
+        <button className="chip" onClick={() => onEnterWorld(post)}>Enter world</button>
         <button className="chip">Like</button>
         <button className="chip">Share</button>
       </footer>
