@@ -5,6 +5,7 @@ import ThreeCard from './components/ThreeCard';
 import FloatingPortalAssistant from './components/FloatingPortalAssistant';
 
 type Kind = '3d' | 'img' | 'text';
+
 type Post = {
   id: string;
   author: string;
@@ -83,7 +84,9 @@ export default function App() {
       <header className="header">
         <div className="header__brand">GLOBALRUNWAYAI</div>
         <div className="header__spacer" />
-        <a className="btn btn--primary" href="#">Launch 3D</a>
+        <a className="btn btn--primary" href="#">
+          Launch 3D
+        </a>
       </header>
 
       <div className="shell">
@@ -141,15 +144,12 @@ export default function App() {
 
         {/* Center */}
         <section className="center" style={{ display: 'grid', gap: 16 }}>
-          {/* Portal hero */}
           <PortalHero />
 
-          {/* Composer */}
           <div className="card card--pad">
             <PostComposer />
           </div>
 
-          {/* Feed */}
           <div className="feed">
             {items.map((p) => (
               <article key={p.id} className="card card--pad post">
@@ -229,7 +229,6 @@ export default function App() {
         </aside>
       </div>
 
-      {/* Floating mini-portal assistant (bottom-right) */}
       <FloatingPortalAssistant />
     </>
   );
