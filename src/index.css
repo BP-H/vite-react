@@ -121,3 +121,24 @@ body{
   box-shadow:0 18px 40px rgba(18,24,40,.18);
   background:#0a0b10;
 }
+
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:100;
+}
+
+.modal-content{
+  background:#12182a;
+  color:#e9ecf1;
+  padding:24px;
+  border-radius:12px;
+  border:1px solid #2b3146;
+  max-width:90%;
+  width:320px;
+  text-align:center;
+}
