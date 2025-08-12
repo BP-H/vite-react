@@ -108,15 +108,20 @@ body{ margin:0; background:var(--bg); color:var(--text);
 .assistant-orb__ring{position:absolute;inset:-6px;border-radius:50%;
   background:radial-gradient(60% 60% at 50% 50%, rgba(106,115,255,.25), transparent);}
 
-/* small tooltip above the orb so you can see it’s listening / what it heard */
 .assistant-orb__toast{
   position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%);
-  white-space: nowrap;
-  padding: 6px 8px; border-radius: 8px;
+  white-space: nowrap; padding: 6px 8px; border-radius: 8px;
   background: rgba(0,0,0,.65); color: #fff; font-size: 12px;
-  box-shadow: 0 8px 20px rgba(0,0,0,.25);
-  pointer-events: none;
+  box-shadow: 0 8px 20px rgba(0,0,0,.25); pointer-events: none;
 }
+.world-topbar { display:none !important; } /* ensure top bar gone */
+.world-bottombar{
+  position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 5;
+  display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px;
+  background: rgba(10,12,20,.55); color:#fff; backdrop-filter: blur(10px) saturate(140%);
+}
+.world-bottombar .crumb { opacity:.8; font-size:12px; }
+
 
 /* Sidebar panel inputs */
 .panel{margin-top:16px;padding:12px;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:rgba(255,255,255,.6);backdrop-filter:blur(10px) saturate(140%)}
