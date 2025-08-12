@@ -43,20 +43,20 @@ function makeBatch(offset: number, size = 12): Post[] {
 /** --- shared canvas context ------------------------------------------- */
 type MiniScene = {
   id: number;
-  ref: MutableRefObject<HTMLElement | null>;
+  ref: MutableRefObject<HTMLElement>;
   element: ReactNode;
   visible: boolean;
 };
 
 const MiniSceneContext = createContext<{
-  register: (ref: MutableRefObject<HTMLElement | null>, element: ReactNode) => number;
+  register: (ref: MutableRefObject<HTMLElement>, element: ReactNode) => number;
   unregister: (id: number) => void;
   setVisible: (id: number, v: boolean) => void;
 } | null>(null);
 
 /** --- tiny 3D card ----------------------------------------------------- */
 function MiniPortal() {
-  const ref = useRef<HTMLDivElement | null>(null);
+  const ref = useRef<HTMLDivElement>(null!);
   const ctx = useContext(MiniSceneContext)!;
   const [id, setId] = useState<number | null>(null);
 
@@ -115,7 +115,7 @@ function MiniPortal() {
         />
       </>
     );
-    const newId = ctx.register(ref as MutableRefObject<HTMLElement | null>, element);
+    const newId = ctx.register(ref as MutableRefObject<HTMLElement>, element);
     setId(newId);
     return () => ctx.unregister(newId);
   }, [ctx]);
@@ -175,13 +175,13 @@ export default function Feed() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null!);
 
   const [scenes, setScenes] = useState<MiniScene[]>([]);
   const idRef = useRef(0);
 
   const register = useCallback(
-    (ref: MutableRefObject<HTMLElement | null>, element: ReactNode) => {
+    (ref: MutableRefObject<HTMLElement>, element: ReactNode) => {
       const id = ++idRef.current;
       setScenes((s) => [...s, { id, ref, element, visible: false }]);
       return id;
@@ -291,7 +291,7 @@ export default function Feed() {
             .map((s) => (
               <View
                 key={s.id}
-                track={s.ref as MutableRefObject<HTMLElement>}
+                track={s.ref}
               >
                 {s.element}
               </View>
