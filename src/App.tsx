@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import Feed2D from "./components/Feed2D";
 import World3D from "./components/World3D";
+import "./portal.css";
 
 export type Post = { id: string; title: string; author: string };
 
@@ -14,16 +15,15 @@ type Mode = "feed" | "world";
 
 export default function App() {
   const [mode, setMode] = useState<Mode>("feed");
-  const [posts] = useState<Post[]>(demo);
   const [selected, setSelected] = useState<Post | null>(null);
   const flashRef = useRef<HTMLDivElement | null>(null);
 
-  const portalTo = (post: Post) => {
-    setSelected(post);
+  const enterWorld = (p: Post) => {
+    setSelected(p);
     const el = flashRef.current;
     if (el) {
       el.classList.remove("flash--run");
-      // force reflow
+      // force reflow so the animation restarts
       // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       el.offsetHeight;
       el.classList.add("flash--run");
@@ -38,12 +38,14 @@ export default function App() {
 
   useEffect(() => {
     document.body.style.overflow = mode === "world" ? "hidden" : "auto";
-    return () => { document.body.style.overflow = "auto"; };
+    return () => {
+      document.body.style.overflow = "auto";
+    };
   }, [mode]);
 
   return (
     <div className="app">
-      {mode === "feed" && <Feed2D posts={posts} onEnterWorld={portalTo} />}
+      {mode === "feed" && <Feed2D posts={demo} onEnterWorld={enterWorld} />}
       {mode === "world" && selected && <World3D post={selected} onBack={backToFeed} />}
       <div ref={flashRef} className="flash" />
     </div>
