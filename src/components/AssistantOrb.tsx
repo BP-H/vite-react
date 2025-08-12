@@ -4,13 +4,11 @@ import bus from "../lib/bus";
 import { Post } from "../types";
 import { WorldState } from "../lib/world";
 
-/** minimal typings so TS/Vercel don't complain */
+// Remove the old declare-global block and use this (or nothing at all):
 declare global {
   interface Window {
     webkitSpeechRecognition?: any;
     SpeechRecognition?: any;
-    speechSynthesis?: any;
-    SpeechSynthesisUtterance?: any;
   }
 }
 type SpeechRecognitionLike = any;
