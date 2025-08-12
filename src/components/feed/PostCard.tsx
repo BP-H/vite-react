@@ -2,33 +2,63 @@ import { useEffect, useRef, useState } from "react";
 import { Post } from "../../types";
 import bus from "../../lib/bus";
 
-export default function PostCard({ post, onPortal }: { post: Post; onPortal: (p: Post, at?: {x:number;y:number}) => void }) {
+type XY = { x: number; y: number };
+
+export default function PostCard({
+  post,
+  onPortal,
+}: {
+  post: Post;
+  onPortal: (p: Post, at?: XY) => void;
+}) {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const [tall, setTall] = useState(false);
 
-  // keep hover target for voice "enter world"
+  // Keep hover target for voice "enter world"
   useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-    function onEnter() {
-      const r = el.getBoundingClientRect();
-      bus.emit("feed:hover", { post, x: r.left + r.width * 0.8, y: r.top + r.height * 0.5 });
-    }
-    el.addEventListener("pointerenter", onEnter);
-    return () => el.removeEventListener("pointerenter", onEnter);
+    const node = cardRef.current;
+    if (!node) return;
+
+    const onEnter = () => {
+      const r = node.getBoundingClientRect();
+      bus.emit("feed:hover", {
+        post,
+        x: r.left + r.width * 0.8,
+        y: r.top + r.height * 0.5,
+      });
+    };
+
+    node.addEventListener("pointerenter", onEnter);
+    return () => {
+      // Guard again for strict builds
+      if (node) node.removeEventListener("pointerenter", onEnter);
+    };
   }, [post]);
 
   function handleEnterWorld() {
-    const el = cardRef.current;
-    const r = el?.getBoundingClientRect();
-    const at = r ? { x: r.left + r.width - 56, y: r.top + r.height - 56 } : { x: window.innerWidth/2, y: window.innerHeight/2 };
+    const node = cardRef.current;
+    const r = node?.getBoundingClientRect();
+    const at: XY = r
+      ? { x: r.left + r.width - 56, y: r.top + r.height - 56 }
+      : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
+    // Fire the nice fly animation + portal
     bus.emit("orb:portal", { post, ...at });
+    // (Shell listens and calls onPortal already via the orb event)
+    // If you want to bypass the bus, uncomment:
+    // onPortal(post, at);
   }
 
   return (
     <article ref={cardRef} className="post-card">
       <header className="post-head">
-        <div className="avatar"><img src="/avatar.jpg" alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} /></div>
+        <div className="avatar">
+          <img
+            src="/avatar.jpg"
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </div>
         <div className="meta">
           <span className="name">{post.author}</span>
           <span className="sub">now • superNova_2177</span>
@@ -41,6 +71,7 @@ export default function PostCard({ post, onPortal }: { post: Post; onPortal: (p:
           alt={post.title}
           onLoad={(e) => {
             const img = e.currentTarget;
+            // Treat portrait as IG-style tall media
             setTall(img.naturalHeight >= img.naturalWidth);
           }}
         />
@@ -55,7 +86,9 @@ export default function PostCard({ post, onPortal }: { post: Post; onPortal: (p:
         <button className="pill">💬 Comment</button>
         <button className="pill">🔁 Share</button>
         <div style={{ flex: 1 }} />
-        <button className="pill" onClick={handleEnterWorld}>🌀 Enter world</button>
+        <button className="pill" onClick={handleEnterWorld}>
+          🌀 Enter world
+        </button>
       </div>
 
       {/* LinkedIn-style composer under the post */}
