@@ -13,6 +13,7 @@ declare global {
 type SpeechRecognitionLike = any;
 
 const FLY_MS = 600;
+const defaultPost: Post = { id: -1, author: "@proto_ai", title: "Prototype Moment", image: "" };
 
 export default function AssistantOrb({
   onPortal,
@@ -29,6 +30,7 @@ export default function AssistantOrb({
     return { x, y };
   });
   const [micOn, setMicOn] = useState(false);
+  const [toast, setToast] = useState<string>("");
   const recRef = useRef<SpeechRecognitionLike | null>(null);
   const lastHoverRef = useRef<{ post: Post; x: number; y: number } | null>(null);
   const [flying, setFlying] = useState(false);
@@ -42,12 +44,10 @@ export default function AssistantOrb({
       if (!flying) setPos({ x, y });
     };
     window.addEventListener("resize", onR);
-    return () => {
-      window.removeEventListener("resize", onR);
-    };
+    return () => { window.removeEventListener("resize", onR); };
   }, [flying]);
 
-  // remember the currently hovered card (so voice can act on it)
+  // remember the currently hovered card
   useEffect(() => {
     const off = bus.on("feed:hover", (p: { post: Post; x: number; y: number }) => {
       lastHoverRef.current = p;
@@ -55,7 +55,7 @@ export default function AssistantOrb({
     return off;
   }, []);
 
-  // when feed asks the orb to portal, fly to that point then trigger the burst
+  // fly to target + portal
   useEffect(() => {
     const off = bus.on("orb:portal", (payload: { post: Post; x: number; y: number }) => {
       setFlying(true);
@@ -69,35 +69,56 @@ export default function AssistantOrb({
     return off;
   }, [onPortal]);
 
-  // Web Speech API (best effort)
+  // Web Speech (visible status + fallback behavior)
   useEffect(() => {
     const Ctor: any = window.webkitSpeechRecognition || window.SpeechRecognition;
-    if (!Ctor) return;
+    if (!Ctor) {
+      setToast("Voice not supported in this browser");
+      return;
+    }
     const rec: SpeechRecognitionLike = new Ctor();
     recRef.current = rec;
     rec.continuous = true;
     rec.interimResults = false;
     rec.lang = "en-US";
+
+    rec.onstart = () => setToast("Listening…");
+    rec.onend   = () => setToast(micOn ? "…" : "");
+    rec.onerror = () => setToast("Mic error");
+
     rec.onresult = (e: any) => {
       const t = Array.from(e.results as any)
         .map((r: any) => (r?.[0]?.transcript || "").toLowerCase())
-        .join(" ");
-      if (t.includes("enter") && (t.includes("world") || t.includes("portal"))) {
-        const p = lastHoverRef.current;
-        if (p) bus.emit("orb:portal", p);
+        .join(" ")
+        .trim();
+      if (!t) return;
+      setToast(`Heard: “${t}”`);
+
+      const enter =
+        t.includes("enter") || t.includes("open portal") || t.includes("go inside") || t.includes("enter void");
+
+      if (enter) {
+        const target = lastHoverRef.current
+          ?? { post: defaultPost, x: window.innerWidth - 56, y: window.innerHeight - 56 };
+        setToast("Opening portal…");
+        bus.emit("orb:portal", target);
+        // (Optional) auto stop listening after action:
+        try { rec.stop(); setMicOn(false); } catch {}
+        return;
       }
+      // not a portal command — just show what we heard
+      window.setTimeout(() => setToast(""), 1500);
     };
-    return () => {
-      try { rec.stop(); } catch {}
-    };
-  }, []);
+
+    return () => { try { rec.stop(); } catch {} };
+  }, [micOn]);
 
   const toggleMic = () => {
     const rec = recRef.current;
     if (!rec) return;
     try {
-      if (micOn) { rec.stop(); setMicOn(false); }
-      else { rec.start(); setMicOn(true); }
+      if (micOn) { rec.stop(); setMicOn(false); setToast(""); }
+      else { rec.start(); setMicOn(true); setToast("Listening…"); }
     } catch {}
   };
 
@@ -116,6 +137,7 @@ export default function AssistantOrb({
     >
       <span className="assistant-orb__core" />
       <span className="assistant-orb__ring" />
+      {toast && <span className="assistant-orb__toast">{toast}</span>}
     </button>
   );
 }
