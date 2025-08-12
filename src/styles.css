@@ -1,7 +1,12 @@
-/* === Theme === */
+/* =========================================================
+   Base + Theme
+   ========================================================= */
 :root{
-  --bg:#0a0b10; --panel:#0f1117; --panel2:#10131a; --stroke:#1c2130;
-  --text:#e9ecf1; --muted:#a1a7b3; --brand:#ff2db8; --ring:rgba(255,45,184,.35);
+  --bg:#0a0b10;
+  --panel:#0f1117; --panel2:#10131a;
+  --card:#11131d; --stroke:#1c2130;
+  --text:#e9ecf1; --muted:#a1a7b3;
+  --brand:#ff2db8; --ring:rgba(255,45,184,.35);
   --radius:16px; --shadow:0 20px 60px rgba(0,0,0,.35);
 }
 
@@ -9,126 +14,139 @@
 html,body,#root{ height:100% }
 body{
   margin:0;
-  background: radial-gradient(120% 100% at -20% -20%, rgba(255,75,208,.18), transparent 60%),
-             linear-gradient(180deg,#0f1117,#10131a);
-  color:#eef2ff;
+  color:var(--text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto;
+  background:
+    radial-gradient(120% 100% at -20% -20%, rgba(255,75,208,.18), transparent 60%),
+    linear-gradient(180deg,#0f1117,#10131a);
 }
 
-/* keep r3f clicks safe */
+/* keep the r3f bg from eating clicks */
 .bg-void canvas, .apple-white-bg > canvas { pointer-events:none !important; }
 
-/* Soft sheet over bg (subtle) */
+/* shell transparent so the feed shows through */
 .apple-white-bg{ background: transparent !important; }
 
-/* ===== Feed layout (center column, IG/LinkedIn vibe) ===== */
-.feed-frame{ position:relative; z-index:1; display:flex; justify-content:center; padding:18px 20px 80px; }
-.feed-col{ width:min(720px,100%); display:flex; flex-direction:column; gap:10px; }
+/* =========================================================
+   Layout
+   ========================================================= */
+.app-root{ min-height:100vh; }
+.content{ padding:0; }
+.feed-frame{
+  position:relative; z-index:1;
+  display:flex; justify-content:flex-start;  /* pin left like IG/LinkedIn */
+  padding: 18px clamp(8px, 3vw, 24px) 80px;
+}
+.feed-col{
+  width:min(760px, 100%);
+  display:flex; flex-direction:column;
+  gap:12px; /* the “thin line” between posts */
+}
 
-/* Cards (frosted glass) */
+/* =========================================================
+   Post Card
+   ========================================================= */
 .post-card{
-  border-radius:16px; border:1px solid #202637;
+  border-radius:16px;
   background: rgba(18,22,35,.55);
   backdrop-filter: blur(14px) saturate(150%);
   box-shadow: 0 12px 30px rgba(0,0,0,.25);
   overflow:hidden;
 }
-.post-head{ display:flex; align-items:center; gap:10px; padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.06); }
-.post-head .avatar{ width:36px; height:36px; border-radius:999px; overflow:hidden; border:1px solid #202637; background:#121423; }
-.post-head .meta{ display:flex; flex-direction:column; line-height:1.15; }
-.post-head .meta .name{ font-weight:800; }
-.post-head .meta .sub{ font-size:12px; opacity:.75; }
 
+/* MEDIA */
 .post-media{ position:relative; }
-.post-media img, .post-media video, .post-media canvas{ width:100%; display:block; background:#0f1117; }
-.post-media.tall img, .post-media.tall video, .post-media.tall canvas{
-  aspect-ratio: 4 / 5; object-fit: cover; width:100%;
+.post-media img{ width:100%; display:block; background:#0f1117; }
+.post-media.tall img{ aspect-ratio: 4 / 5; object-fit: cover; }
+
+/* Top-left circular badge on media */
+.post-user{
+  position:absolute; left:12px; top:12px; display:flex; align-items:center; gap:8px;
+}
+.post-user .badge{
+  width:64px; height:64px; border-radius:999px; overflow:hidden;
+  border:1px solid rgba(255,255,255,.1);
+  background:
+    radial-gradient(140% 140% at 30% 30%, #0b1226, #0b1226 40%, rgba(255,255,255,.04)),
+    linear-gradient(180deg,#0c1530,#0b1226);
+  box-shadow: 0 10px 28px rgba(0,0,0,.35), 0 0 0 6px rgba(38,53,255,.12);
+}
+.post-user .badge img{ width:100%; height:100%; object-fit:cover; display:block; }
+.post-user .who{
+  font-weight:800; text-shadow:0 2px 12px rgba(0,0,0,.45);
+  background: rgba(15,18,30,.55);
+  backdrop-filter: blur(6px);
+  border-radius:10px; padding:4px 8px; border:1px solid rgba(255,255,255,.08);
 }
 
-.post-body{ padding:12px 14px; }
-
-.post-engage{
-  display:flex; align-items:center; gap:10px; padding:10px 12px;
-  border-top:1px solid rgba(255,255,255,.06);
+/* little vibey orb bottom-right of media */
+.corner-orb{
+  position:absolute; right:18px; bottom:18px; width:64px; height:64px; border-radius:999px;
+  background: radial-gradient(120% 120% at 30% 30%, #8b5cf6, #3b82f6 65%, #06b6d4);
+  box-shadow: 0 12px 40px rgba(82,97,255,.45), inset 0 1px 0 rgba(255,255,255,.5);
+  opacity:.75;
 }
 
-/* Pills */
-.pill{
-  --bd: rgba(255,255,255,.14);
-  --bg: #111423;
-  --hover: rgba(255,75,208,.18);
+/* Caption strip */
+.post-caption{ padding:12px 14px 10px; }
+.post-caption h3{ margin:0; font-weight:800; }
+
+/* Actions: icon + text, with frosted fades above/below */
+.post-actions{
+  position:relative;
+  padding:8px 8px 6px;
+  background: rgba(15,17,25,.55);
+  backdrop-filter: blur(12px) saturate(140%);
+}
+.post-actions::before,
+.post-actions::after{
+  content:""; position:absolute; left:0; right:0; height:12px;
+  pointer-events:none;
+  background: linear-gradient(to bottom, rgba(255,255,255,.08), rgba(255,255,255,0));
+}
+.post-actions::before{ top:-12px; }
+.post-actions::after{
+  bottom:-12px;
+  transform: rotate(180deg);
+}
+.actions-row{
+  display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+}
+
+/* minimal action */
+.miniact{
   display:inline-flex; align-items:center; gap:8px;
-  height:34px; padding:0 12px; border-radius:999px; border:1px solid var(--bd);
-  background:var(--bg); color:#e9ecf1; font-weight:600; cursor:pointer;
-  transition: box-shadow .15s, border-color .15s, transform .1s;
+  height:36px; padding:0 12px;
+  border-radius:12px; border:1px solid rgba(255,255,255,.10);
+  background:#121626; color:#e9ecf1; font-weight:600; cursor:pointer;
+  transition: box-shadow .15s, border-color .15s, transform .1s, background .15s;
 }
-.pill:hover{
-  border-color: rgba(255,75,208,.45);
-  box-shadow:0 0 0 2px var(--hover) inset, 0 8px 20px rgba(0,0,0,.18);
+.miniact:hover{
+  border-color: rgba(106,115,255,.45);
+  box-shadow:0 0 0 2px rgba(106,115,255,.18) inset, 0 8px 20px rgba(0,0,0,.18);
   transform: translateY(-1px);
 }
 
-/* Composer strip (LinkedIn-style) */
-.post-composer{
-  display:flex; align-items:center; gap:10px;
-  padding:10px 12px; border-top:1px solid rgba(255,255,255,.06);
-  background: rgba(16,18,30,.55);
-  backdrop-filter: blur(12px) saturate(140%);
+/* Engage tray pops below */
+.engage-tray{
+  display:grid; grid-auto-flow:column; gap:8px;
+  overflow:auto; padding:8px 2px 2px;
+  max-height:0; opacity:0; transition:max-height .25s ease, opacity .2s ease;
 }
-.post-composer .me{ width:28px; height:28px; border-radius:999px; border:1px solid #202637; object-fit:cover; background:#121423; }
-.post-composer .chips{ display:flex; gap:8px; flex-wrap:wrap; }
-.post-composer .chip{
-  height:32px; border-radius:999px; padding:0 12px; display:inline-flex; align-items:center; gap:8px;
-  border:1px solid rgba(255,255,255,.14); background:#111423; color:#e9ecf1; font-weight:600; cursor:pointer;
-}
-.post-composer .chip:hover{ border-color: rgba(255,75,208,.45); box-shadow: 0 0 0 2px rgba(255,75,208,.18) inset; }
+.post-actions.open .engage-tray{ max-height:70px; opacity:1; }
 
-.end{ text-align:center; color:#a1a7b3; padding:28px 0 40px; }
+.chip{
+  --bd: rgba(255,255,255,.14);
+  display:inline-flex; align-items:center; gap:6px;
+  height:32px; padding:0 12px; border-radius:999px;
+  border:1px solid var(--bd); background:#111423; color:#e9ecf1; font-weight:600;
+  white-space: nowrap; cursor:pointer;
+}
+.chip:hover{ border-color: rgba(255,75,208,.45); box-shadow:0 0 0 2px rgba(255,75,208,.18) inset; transform: translateY(-1px); }
 
-/* ===== Portal (white burst) ===== */
-.portal-overlay{
-  position:fixed; inset:0; pointer-events:none; z-index:9999;
-  --px:50vw; --py:50vh; --r0:0px;
-  background: radial-gradient(circle at var(--px) var(--py),
-    rgba(255,255,255,1) 0,
-    rgba(255,255,255,1) 60%,
-    rgba(255,255,255,.98) 70%,
-    rgba(255,255,255,0) 71%);
-  clip-path: circle(var(--r0) at var(--px) var(--py));
-  opacity:0;
-  transition: clip-path .65s cubic-bezier(.22,.61,.36,1), opacity .2s ease;
-}
-.portal-overlay.on{ --r0:160vmax; opacity:1; }
-
-/* ===== Assistant Orb ===== */
-.assistant-orb{
-  position:fixed; z-index:9998; width:56px; height:56px; border-radius:999px;
-  border:1px solid rgba(255,255,255,.15);
-  background:radial-gradient(120% 120% at 30% 30%, #6a73ff, #a855f7 60%, #0ea5e9 100%);
-  box-shadow:0 12px 40px rgba(82,97,255,.35), inset 0 1px 0 rgba(255,255,255,.5);
-  transform:translate(-50%,-50%);
-  transition:left .6s cubic-bezier(.22,.61,.36,1), top .6s cubic-bezier(.22,.61,.36,1), filter .2s;
-  display:grid; place-items:center; cursor:pointer;
-}
-.assistant-orb:hover{ box-shadow:0 14px 44px rgba(82,97,255,.5), inset 0 1px 0 rgba(255,255,255,.7); }
-.assistant-orb.mic{ filter:drop-shadow(0 0 18px rgba(106,115,255,.6)); }
-.assistant-orb.flying{ pointer-events:none; filter:saturate(150%); }
-.assistant-orb__core{
-  width:26px; height:26px; border-radius:50%;
-  background:radial-gradient(circle at 30% 30%, #fff, #8a90ff 60%, #5b63ff);
-  box-shadow:inset 0 0 30px rgba(255,255,255,.45); filter:blur(.2px);
-}
-.assistant-orb__ring{ position:absolute; width:64px; height:64px; border-radius:999px; box-shadow:0 0 0 6px rgba(106,115,255,.12); }
-.assistant-orb.mic .assistant-orb__ring{ animation: ping 1.4s ease-out infinite; }
-@keyframes ping{ 0%{ box-shadow:0 0 0 0 rgba(106,115,255,.25);} 100%{ box-shadow:0 0 0 28px rgba(106,115,255,0);} }
-.assistant-orb__toast{
-  position:absolute; bottom:70px; left:50%; transform:translateX(-50%);
-  white-space:nowrap; padding:6px 8px; border-radius:8px;
-  background:rgba(0,0,0,.65); color:#fff; font-size:12px;
-  box-shadow:0 8px 20px rgba(0,0,0,.25); pointer-events:none;
-}
-
-/* ===== Chat Dock ===== */
+/* =========================================================
+   Chat Dock (unchanged)
+   ========================================================= */
 .chatdock{
   position: fixed; left: 50%; bottom: 88px; transform: translateX(-50%);
   width: min(680px, 92vw);
@@ -149,4 +167,52 @@ body{
 .bubble.user{ justify-self: end; background: rgba(99,102,241,.25); border: 1px solid rgba(99,102,241,.35); }
 .bubble.assistant{ justify-self: start; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); }
 .bubble.system{ justify-self: center; font-size: 12px; opacity: .8 }
-.chatdock-pill{ position: fixed; left: 50%; bottom: 88px; transform: translateX(-50%); z-index: 60; border: 1px solid rgba(0,0,0,.15); border-radius: 999px; padding: 8px 12px; background: rgba(20,22,32,.75); color: #fff; cursor: pointer; backdrop-filter: blur(10px) saturate(140%); box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+.chatdock-pill{
+  position: fixed; left: 50%; bottom: 88px; transform: translateX(-50%);
+  z-index: 60; border: 1px solid rgba(0,0,0,.15); border-radius: 999px;
+  padding: 8px 12px; background: rgba(20,22,32,.75); color: #fff; cursor: pointer;
+  backdrop-filter: blur(10px) saturate(140%); box-shadow: 0 8px 20px rgba(0,0,0,.25);
+}
+
+/* =========================================================
+   Assistant Orb (kept)
+   ========================================================= */
+.assistant-orb{
+  position:fixed; z-index:9998; width:56px; height:56px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.15);
+  background:radial-gradient(120% 120% at 30% 30%, #6a73ff, #a855f7 60%, #0ea5e9 100%);
+  box-shadow:0 12px 40px rgba(82,97,255,.35), inset 0 1px 0 rgba(255,255,255,.5);
+  transform:translate(-50%,-50%);
+  transition:left .6s cubic-bezier(.22,.61,.36,1), top .6s cubic-bezier(.22,.61,.36,1), filter .2s;
+  display:grid; place-items:center; cursor:pointer;
+}
+.assistant-orb:hover{ box-shadow:0 14px 44px rgba(82,97,255,.5), inset 0 1px 0 rgba(255,255,255,.7); }
+.assistant-orb.mic{ filter:drop-shadow(0 0 18px rgba(106,115,255,.6)); }
+.assistant-orb.flying{ pointer-events:none; filter:saturate(150%); }
+.assistant-orb__core{ width:26px; height:26px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #fff, #8a90ff 60%, #5b63ff); box-shadow:inset 0 0 30px rgba(255,255,255,.45); filter:blur(.2px); }
+.assistant-orb__ring{ position:absolute; width:64px; height:64px; border-radius:999px; box-shadow:0 0 0 6px rgba(106,115,255,.12); }
+.assistant-orb.mic .assistant-orb__ring{ animation: ping 1.4s ease-out infinite; }
+@keyframes ping{ 0%{ box-shadow:0 0 0 0 rgba(106,115,255,.25);} 100%{ box-shadow:0 0 0 28px rgba(106,115,255,0);} }
+.assistant-orb__toast{
+  position:absolute; bottom:70px; left:50%; transform:translateX(-50%);
+  white-space:nowrap; padding:6px 8px; border-radius:8px;
+  background:rgba(0,0,0,.65); color:#fff; font-size:12px;
+  box-shadow:0 8px 20px rgba(0,0,0,.25); pointer-events:none;
+}
+
+/* =========================================================
+   Portal overlay (unchanged)
+   ========================================================= */
+.portal-overlay{
+  position:fixed; inset:0; pointer-events:none; z-index:9999;
+  --px:50vw; --py:50vh; --r0:0px;
+  background: radial-gradient(circle at var(--px) var(--py),
+    rgba(255,255,255,1) 0,
+    rgba(255,255,255,1) 60%,
+    rgba(255,255,255,.98) 70%,
+    rgba(255,255,255,0) 71%);
+  clip-path: circle(var(--r0) at var(--px) var(--py));
+  opacity:0;
+  transition: clip-path .65s cubic-bezier(.22,.61,.36,1), opacity .2s ease;
+}
+.portal-overlay.on{ --r0:160vmax; opacity:1; }
