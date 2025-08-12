@@ -1,11 +1,12 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, ContactShadows } from '@react-three/drei';
-import * as THREE from 'three';
 import { useRef } from 'react';
 
+// Use `any` to avoid relying on THREE types if they’re not resolved yet.
 function Orb() {
-  const m = useRef<THREE.Mesh>(null!);
+  const m = useRef<any>(null);
   useFrame((_, d) => {
+    if (!m.current) return;
     m.current.rotation.x += 0.45 * d;
     m.current.rotation.y += 0.35 * d;
   });
