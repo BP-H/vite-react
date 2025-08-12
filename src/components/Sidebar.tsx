@@ -1,4 +1,3 @@
-// src/components/Sidebar.tsx
 import { useEffect, useMemo, useState } from "react";
 import bus from "../lib/bus";
 import "./Sidebar.css";
@@ -16,11 +15,9 @@ function useLocal<T>(key: string, init: T) {
 }
 
 export default function Sidebar() {
-  // visual state — default to FAB (collapsed)
   const [open, setOpen] = useLocal<boolean>("snv.sidebarOpen", false);
   const [heroOpen, setHeroOpen] = useState(false);
 
-  // identity, search, backend, api key
   const [species, setSpecies] = useLocal<Species>("sn.species", "human");
   const [decisionKind, setDecisionKind] = useLocal<DecisionKind>("sn.decisionKind", "standard");
   const [query, setQuery] = useLocal<string>("sn.search", "");
@@ -29,18 +26,15 @@ export default function Sidebar() {
   const [apiKey, setApiKey] = useLocal<string>("sn2177.apiKey", "");
   const [showKey, setShowKey] = useState(false);
 
-  // demo metrics
   const viewers = useMemo(() => 2862, []);
   const impressions = useMemo(() => 1442, []);
 
-  // bus bridges
   useEffect(() => { bus.emit("identity:update", { species, decisionKind }); }, [species, decisionKind]);
   useEffect(() => { bus.emit("search:update", { query }); }, [query]);
   useEffect(() => { bus.emit("backend:update", { useReal, backendUrl }); }, [useReal, backendUrl]);
 
   const goto = (label: string) => bus.emit("nav:goto", { label });
 
-  // inline placeholder avatar
   const placeholderSvg = `data:image/svg+xml;utf8,${encodeURIComponent(`
   <svg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'>
     <defs>
@@ -52,15 +46,13 @@ export default function Sidebar() {
     </defs>
     <rect width='128' height='128' rx='28' fill='#0f1117'/>
     <circle cx='64' cy='64' r='36' fill='url(#g)'/>
-  </svg>`)}'`;
+  </svg>`)}"`;
 
   return (
     <>
-      {/* optional subtle scrim while open (click to close) */}
       {open && <div className="snv2-scrim" onClick={() => setOpen(false)} />}
 
-      <aside className={`snv2 ${open ? "open" : "fab"} ${heroOpen ? "hero" : ""}`} aria-hidden={false}>
-        {/* When FAB, the entire circle is a button */}
+      <aside className={`snv2 ${open ? "open" : "fab"} ${heroOpen ? "hero" : ""}`}>
         {!open && (
           <button className="snv2-fab" aria-label="Open menu" onClick={() => setOpen(true)}>
             <img
@@ -71,7 +63,6 @@ export default function Sidebar() {
           </button>
         )}
 
-        {/* Panel content (slides in) */}
         {open && (
           <div className="snv2-panel">
             <div className="snv2-panel__head">
@@ -82,7 +73,6 @@ export default function Sidebar() {
               </button>
             </div>
 
-            {/* avatar + hero */}
             <div className="snv2-hero">
               <button className="avatar" onClick={() => setHeroOpen(v => !v)} aria-expanded={heroOpen}>
                 <img
@@ -148,29 +138,29 @@ export default function Sidebar() {
             <div className="divider" />
 
             <div className="section">Navigate</div>
-            <button className="btn">🏡 <span>Feed</span></button>
-            <button className="btn">💬 <span>Chat</span></button>
-            <button className="btn">📬 <span>Messages</span></button>
-            <button className="btn">👤 <span>Profile</span></button>
-            <button className="btn">📑 <span>Proposals</span></button>
-            <button className="btn">✅ <span>Decisions</span></button>
-            <button className="btn">⚙️ <span>Execution</span></button>
+            <button className="btn" onClick={() => goto("Feed")}>🏡 <span>Feed</span></button>
+            <button className="btn" onClick={() => goto("Chat")}>💬 <span>Chat</span></button>
+            <button className="btn" onClick={() => goto("Messages")}>📬 <span>Messages</span></button>
+            <button className="btn" onClick={() => goto("Profile")}>👤 <span>Profile</span></button>
+            <button className="btn" onClick={() => goto("Proposals")}>📑 <span>Proposals</span></button>
+            <button className="btn" onClick={() => goto("Decisions")}>✅ <span>Decisions</span></button>
+            <button className="btn" onClick={() => goto("Execution")}>⚙️ <span>Execution</span></button>
 
-            <button className="btn ghost">🪙 <span>Coin</span></button>
-            <button className="btn ghost">🍴 <span>Forks</span></button>
-            <button className="btn ghost">🎛️ <span>Remixes</span></button>
+            <button className="btn ghost" onClick={() => goto("Coin")}>🪙 <span>Coin</span></button>
+            <button className="btn ghost" onClick={() => goto("Forks")}>🍴 <span>Forks</span></button>
+            <button className="btn ghost" onClick={() => goto("Remixes")}>🎛️ <span>Remixes</span></button>
 
             <div className="divider" />
 
             <div className="subheader">Premium</div>
-            <button className="btn">🎶 <span>Music</span></button>
-            <button className="btn">🚀 <span>Agents</span></button>
-            <button className="btn">🌌 <span>Enter Metaverse</span></button>
+            <button className="btn" onClick={() => goto("Music")}>🎶 <span>Music</span></button>
+            <button className="btn" onClick={() => goto("Agents")}>🚀 <span>Agents</span></button>
+            <button className="btn" onClick={() => goto("Enter Metaverse")}>🌌 <span>Enter Metaverse</span></button>
 
             <div className="caption">Mathematically sucked into a superNova_2177 void — stay tuned for 3D immersion</div>
 
             <div className="divider" />
-            <button className="btn">⚙️ <span>Settings</span></button>
+            <button className="btn" onClick={() => goto("Settings")}>⚙️ <span>Settings</span></button>
           </div>
         )}
       </aside>
