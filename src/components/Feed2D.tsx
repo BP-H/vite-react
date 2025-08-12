@@ -1,90 +1,52 @@
 // src/components/Feed2D.tsx
-import React, { memo, useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 
-/** ------------ types ------------------ */
-export type Post = {
-  id: string;
-  author: string;
-  title: string;
-  image?: string;
-};
+export type Post = { id: number; title: string; author: string; image: string };
 
-type Props = {
-  /** optional seed list; otherwise we generate placeholders */
-  initial?: Post[];
-  /** parent can hook the portal transition */
-  onEnterWorld?: (p: Post) => void;
-};
-
-/** ------------ helpers ---------------- */
-const AUTHORS = ["@proto_ai", "@neonfork", "@superNova_2177"];
-const TITLES = ["Prototype Moment", "Symbolic Feed", "Ocean Study"];
-
-const makePost = (n: number): Post => ({
-  id: String(n),
-  author: AUTHORS[n % AUTHORS.length],
-  title: TITLES[n % TITLES.length],
-  image: `https://picsum.photos/seed/${n}-sn2177/1200/700`,
+const makePost = (id: number): Post => ({
+  id,
+  author: ["@proto_ai", "@neonfork", "@superNova_2177"][id % 3],
+  title: ["Prototype Moment", "Symbolic Feed", "Ocean Study"][id % 3],
+  image: `https://picsum.photos/seed/${id}-sn2177/1200/700`,
 });
 
-/** ------------ sidebar ---------------- */
-function Sidebar({ onOpen, hasPost }: { onOpen: () => void; hasPost: boolean }) {
-  return (
-    <aside className="sidebar">
-      <div className="sidebar__head">Sidebar</div>
-      <div className="sidebar__body">
-        <button className="primary" onClick={onOpen} disabled={!hasPost}>
-          Open Portal
-        </button>
+type Props = {
+  onEnterWorld: (p: Post, at?: { x: number; y: number }) => void;
+};
 
-        <nav className="nav">
-          <div className="nav__label">PROFILE</div>
-          <a className="nav__item">My Worlds</a>
-          <a className="nav__item">Following</a>
-          <a className="nav__item">Discover</a>
-        </nav>
+function Card({ p, onEnterWorld }: { p: Post; onEnterWorld: Props["onEnterWorld"] }) {
+  return (
+    <article className="card frosted">
+      <div className="card-head">
+        <div className="byline">
+          <span className="handle">{p.author}</span>
+          <span className="dot">•</span>
+          <span>demo</span>
+        </div>
+        <h3>{p.title}</h3>
       </div>
-    </aside>
-  );
-}
-
-/** ------------- card ------------------ */
-function Card({ post, onEnterWorld }: { post: Post; onEnterWorld?: (p: Post) => void }) {
-  const enter = () => onEnterWorld?.(post);
-
-  return (
-    <article className="card frost">
-      <header className="card__head">
-        <strong>{post.author}</strong>
-        <span className="dot">•</span>
-        <span className="muted">demo</span>
-      </header>
-
-      <h3 className="card__title">{post.title}</h3>
 
       <div className="media-wrap">
-        {post.image ? (
-          <img loading="lazy" src={post.image} alt={post.title} />
-        ) : (
-          <div className="placeholder">
-            <div className="placeholder__shimmer" />
-          </div>
-        )}
+        <img loading="lazy" src={p.image} alt={p.title} />
       </div>
 
-      <footer className="card__foot">
-        <button className="chip" onClick={enter}>Enter world</button>
-        <button className="chip">Like</button>
-        <button className="chip">Share</button>
-      </footer>
+      <div className="card-actions">
+        <button
+          className="pill"
+          onClick={(e) => onEnterWorld(p, { x: e.clientX, y: e.clientY })}
+        >
+          Enter world
+        </button>
+        <button className="pill ghost">Like</button>
+        <button className="pill ghost">Share</button>
+      </div>
     </article>
   );
 }
 
-/** ------------- skeleton --------------- */
-function SkeletonRow() {
+function Skeleton() {
   return (
-    <div className="card frost skeleton">
+    <div className="card skeleton">
       <div className="s-line w40" />
       <div className="s-line w70" />
       <div className="s-img" />
@@ -93,10 +55,9 @@ function SkeletonRow() {
   );
 }
 
-/** ------------- main feed -------------- */
-function Feed2D({ initial, onEnterWorld }: Props) {
-  const [posts, setPosts] = useState<Post[]>(
-    () => initial ?? Array.from({ length: 8 }, (_, i) => makePost(i))
+function Feed2D({ onEnterWorld }: Props) {
+  const [posts, setPosts] = useState<Post[]>(() =>
+    Array.from({ length: 8 }, (_, i) => makePost(i))
   );
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
@@ -105,48 +66,40 @@ function Feed2D({ initial, onEnterWorld }: Props) {
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
-
     const io = new IntersectionObserver(
       async (entries) => {
         const seen = entries.some((e) => e.isIntersecting);
-        if (!seen || loading || !hasMore) return;
-
-        setLoading(true);
-        // simulate latency
-        await new Promise((r) => setTimeout(r, 600));
-
-        const start = posts.length;
-        const next = Array.from({ length: 6 }, (_, i) => makePost(start + i));
-        setPosts((p) => [...p, ...next]);
-
-        const total = start + next.length;
-        if (total >= 120) setHasMore(false); // cap demo length
-        setLoading(false);
+        if (seen && !loading && hasMore) {
+          setLoading(true);
+          await new Promise((r) => setTimeout(r, 500)); // fake latency
+          const base = posts.length;
+          const next = Array.from({ length: 6 }, (_, i) => makePost(base + i));
+          setPosts((p) => [...p, ...next]);
+          setHasMore(base + next.length < 120);
+          setLoading(false);
+        }
       },
       { rootMargin: "1200px 0px 1200px 0px" }
     );
-
     io.observe(el);
     return () => io.disconnect();
   }, [posts.length, loading, hasMore]);
 
-  const openPortal = () => {
-    const p = posts[0];
-    if (p) onEnterWorld?.(p);
-  };
-
   return (
-    <div className="layout">
-      <Sidebar onOpen={openPortal} hasPost={posts.length > 0} />
-      <main className="feed">
-        {posts.map((p) => (
-          <Card key={p.id} post={p} onEnterWorld={onEnterWorld} />
-        ))}
+    <div className="feed-wrap">
+      <div className="feed-header">
+        <h1>Feed</h1>
+        <div className="sweep" />
+      </div>
 
+      <div className="cards">
+        {posts.map((p) => (
+          <Card key={p.id} p={p} onEnterWorld={onEnterWorld} />
+        ))}
         <div ref={sentinelRef} />
-        {loading && <SkeletonRow />}
+        {loading && <Skeleton />}
         {!hasMore && <div className="end">— end —</div>}
-      </main>
+      </div>
     </div>
   );
 }
