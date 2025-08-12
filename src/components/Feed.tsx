@@ -42,24 +42,20 @@ function makeBatch(offset: number, size = 12): Post[] {
 /** --- shared canvas context ------------------------------------------- */
 type MiniScene = {
   id: number;
-  ref: React.MutableRefObject<HTMLElement>; // what <View track> expects
+  ref: React.RefObject<HTMLDivElement>; // store the native div ref
   element: ReactNode;
   visible: boolean;
 };
 
 const MiniSceneContext = createContext<{
-  register: (ref: React.MutableRefObject<HTMLElement>, element: ReactNode) => number;
+  register: (ref: React.RefObject<HTMLDivElement>, element: ReactNode) => number;
   unregister: (id: number) => void;
   setVisible: (id: number, v: boolean) => void;
 } | null>(null);
 
 /** --- tiny 3D card ----------------------------------------------------- */
 function MiniPortal() {
-  // Real DOM ref for the div (must be HTMLDivElement for React)
-  const domRef = useRef<HTMLDivElement>(null!);
-  // Bridge ref cast to what <View track> wants
-  const viewRef = domRef as unknown as React.MutableRefObject<HTMLElement>;
-
+  const domRef = useRef<HTMLDivElement>(null);
   const ctx = useContext(MiniSceneContext)!;
   const [id, setId] = useState<number | null>(null);
 
@@ -70,6 +66,7 @@ function MiniPortal() {
       [seed]
     );
     useFrame((_, d) => {
+      if (!mesh.current) return;
       mesh.current.rotation.x += 0.25 * d;
       mesh.current.rotation.y -= 0.18 * d;
     });
@@ -82,7 +79,10 @@ function MiniPortal() {
   }
   function Torus() {
     const mesh = useRef<THREE.Mesh>(null!);
-    useFrame((_, d) => (mesh.current.rotation.y -= 0.35 * d));
+    useFrame((_, d) => {
+      if (!mesh.current) return;
+      mesh.current.rotation.y -= 0.35 * d;
+    });
     return (
       <mesh ref={mesh} castShadow receiveShadow>
         <torusKnotGeometry args={[0.26, 0.08, 100, 16]} />
@@ -109,21 +109,15 @@ function MiniPortal() {
             <Torus />
           </group>
         </Float>
-        <ContactShadows
-          position={[0, -0.85, 0]}
-          opacity={0.25}
-          scale={10}
-          blur={1.6}
-          far={2}
-        />
+        <ContactShadows position={[0, -0.85, 0]} opacity={0.25} scale={10} blur={1.6} far={2} />
       </>
     );
-    const newId = ctx.register(viewRef, element);
+    const newId = ctx.register(domRef, element);
     setId(newId);
     return () => ctx.unregister(newId);
-  }, [ctx, viewRef]);
+  }, [ctx]);
 
-  // observe visibility to pause when off-screen (use the real DOM ref)
+  // observe visibility to pause when off-screen
   useEffect(() => {
     if (!domRef.current || id === null) return;
     const io = new IntersectionObserver(
@@ -183,14 +177,11 @@ export default function Feed() {
   const [scenes, setScenes] = useState<MiniScene[]>([]);
   const idRef = useRef(0);
 
-  const register = useCallback(
-    (ref: React.MutableRefObject<HTMLElement>, element: ReactNode) => {
-      const id = ++idRef.current;
-      setScenes((s) => [...s, { id, ref, element, visible: false }]);
-      return id;
-    },
-    []
-  );
+  const register = useCallback((ref: React.RefObject<HTMLDivElement>, element: ReactNode) => {
+    const id = ++idRef.current;
+    setScenes((s) => [...s, { id, ref, element, visible: false }]);
+    return id;
+  }, []);
 
   const unregister = useCallback((id: number) => {
     setScenes((s) => s.filter((p) => p.id !== id));
@@ -291,7 +282,11 @@ export default function Feed() {
           {scenes
             .filter((s) => s.visible)
             .map((s) => (
-              <View key={s.id} track={s.ref}>
+              <View
+                key={s.id}
+                // Cast once, right where drei expects it:
+                track={s.ref as unknown as React.MutableRefObject<HTMLElement>}
+              >
                 {s.element}
               </View>
             ))}
