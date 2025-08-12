@@ -1,6 +1,7 @@
 // src/components/Sidebar.tsx
 import { useEffect, useMemo, useState } from "react";
 import bus from "../lib/bus";
+import "./Sidebar.css";
 
 type Species = "human" | "company" | "ai";
 type DecisionKind = "standard" | "important";
@@ -21,9 +22,9 @@ function useLocal<T>(key: string, init: T) {
 }
 
 export default function Sidebar() {
-  // profile (static placeholders for now)
-  const viewers = useMemo(() => 2100 + Math.floor(Math.random() * 350), []);
-  const impressions = useMemo(() => 1400 + Math.floor(Math.random() * 250), []);
+  // profile demo stats
+  const viewers = useMemo(() => 2862, []);
+  const impressions = useMemo(() => 1442, []);
 
   // identity
   const [species, setSpecies] = useLocal<Species>("sn.species", "human");
@@ -32,11 +33,14 @@ export default function Sidebar() {
   // search
   const [query, setQuery] = useLocal<string>("sn.search", "");
 
-  // backend
+  // backend config
   const [useReal, setUseReal] = useLocal<boolean>("sn.useRealBackend", false);
   const [backendUrl, setBackendUrl] = useLocal<string>("sn.backendUrl", "http://127.0.0.1:8000");
 
-  // emit changes so the rest of the app can react
+  // UI
+  const [heroOpen, setHeroOpen] = useState(false);
+
+  // emit bus updates
   useEffect(() => { bus.emit("identity:update", { species, decisionKind }); }, [species, decisionKind]);
   useEffect(() => { bus.emit("search:update", { query }); }, [query]);
   useEffect(() => { bus.emit("backend:update", { useReal, backendUrl }); }, [useReal, backendUrl]);
@@ -44,122 +48,108 @@ export default function Sidebar() {
   const goto = (label: string) => bus.emit("nav:goto", { label });
 
   return (
-    <aside className="sn-sidebar">
-      {/* brand / quick home */}
-      <button className="sn-brandBtn" onClick={() => goto("Feed")} aria-label="superNova_2177 home">
-        <span className="spark">💫</span> <strong>superNova_2177</strong>
+    <aside className={`snv-sidebar ${heroOpen ? "open" : ""}`}>
+      {/* top brand button */}
+      <button className="snv-brand" onClick={() => goto("Feed")} aria-label="superNova home">
+        <span className="snv-brand-orb" />
+        <span className="snv-brand-text">superNova_2177</span>
       </button>
 
-      {/* profile card */}
-      <div className="sn-card">
-        <img
-          src="https://placehold.co/320x160/11131d/FFFFFF?text=superNova_2177"
-          alt="cover"
-          className="sn-cover"
-        />
-        <div className="sn-name">taha_gungor</div>
-        <div className="sn-caption">ceo / test_tech</div>
-        <div className="sn-caption">artist / will = …</div>
-        <div className="sn-caption">New York, NY, United States</div>
-        <div className="sn-caption">test_tech</div>
+      {/* avatar → expands to hero */}
+      <div className="snv-hero">
+        <button
+          className="snv-avatar"
+          onClick={() => setHeroOpen(v => !v)}
+          aria-expanded={heroOpen}
+          title="Open profile"
+        >
+          <img src="/avatar.jpg" alt="avatar" onError={(e)=>{(e.currentTarget as HTMLImageElement).src="https://i.pravatar.cc/128?img=32"}}/>
+        </button>
 
-        <div className="sn-metrics">
-          <div className="sn-metric">
-            <div className="k">{viewers.toLocaleString()}</div>
-            <div className="l">Profile viewers</div>
-          </div>
-          <div className="sn-metric">
-            <div className="k">{impressions.toLocaleString()}</div>
-            <div className="l">Post impressions</div>
+        <div className="snv-hero-card">
+          <div className="snv-hero-name">taha_gungor</div>
+          <div className="snv-hero-sub">ceo / test_tech • artist</div>
+          <div className="snv-hero-metrics">
+            <div><strong>{viewers.toLocaleString()}</strong><span>Profile viewers</span></div>
+            <div><strong>{impressions.toLocaleString()}</strong><span>Post impressions</span></div>
           </div>
         </div>
       </div>
 
-      {/* identity controls */}
-      <div className="sn-section">Identity</div>
-      <label className="sn-label">I am a…</label>
-      <select
-        value={species}
-        onChange={(e) => setSpecies(e.target.value as Species)}
-        className="sn-input"
-      >
+      {/* identity */}
+      <div className="snv-section">Identity</div>
+      <label className="snv-label">I am a…</label>
+      <select className="snv-input" value={species} onChange={e => setSpecies(e.target.value as Species)}>
         <option value="human">human</option>
         <option value="company">company</option>
         <option value="ai">ai</option>
       </select>
 
-      <label className="sn-label">Decision kind</label>
-      <select
-        value={decisionKind}
-        onChange={(e) => setDecisionKind(e.target.value as DecisionKind)}
-        className="sn-input"
-      >
+      <label className="snv-label">Decision kind</label>
+      <select className="snv-input" value={decisionKind} onChange={e => setDecisionKind(e.target.value as DecisionKind)}>
         <option value="standard">standard (60% yes)</option>
         <option value="important">important (90% yes)</option>
       </select>
 
       {/* search */}
-      <div className="sn-section">Search</div>
+      <div className="snv-section">Search</div>
       <input
-        className="sn-input"
+        className="snv-input"
         placeholder="🔍 Search posts, people…"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={e => setQuery(e.target.value)}
       />
 
       {/* backend */}
-      <div className="sn-section">Backend</div>
-      <label className="sn-toggle">
-        <input
-          type="checkbox"
-          checked={useReal}
-          onChange={(e) => setUseReal(e.target.checked)}
-        />
+      <div className="snv-section">Backend</div>
+      <label className="snv-toggle">
+        <input type="checkbox" checked={useReal} onChange={e => setUseReal(e.target.checked)} />
         <span>Use real backend</span>
       </label>
       <input
-        className="sn-input"
+        className="snv-input"
         placeholder="http://127.0.0.1:8000"
         value={backendUrl}
-        onChange={(e) => setBackendUrl(e.target.value)}
+        onChange={e => setBackendUrl(e.target.value)}
       />
 
       {/* workspaces */}
-      <div className="sn-section">Workspaces</div>
-      <button className="sn-btn" onClick={() => goto("Test Tech")}>🏠 Test Tech</button>
-      <button className="sn-btn" onClick={() => goto("superNova_2177")}>✨ superNova_2177</button>
-      <button className="sn-btn" onClick={() => goto("GLOBALRUNWAY")}>🌍 GLOBALRUNWAY</button>
+      <div className="snv-section">Workspaces</div>
+      <button className="snv-btn" onClick={() => goto("Test Tech")}>🏠 Test Tech</button>
+      <button className="snv-btn" onClick={() => goto("superNova_2177")}>✨ superNova_2177</button>
+      <button className="snv-btn" onClick={() => goto("GLOBALRUNWAY")}>🌍 GLOBALRUNWAY</button>
 
-      <div className="sn-divider" />
+      <div className="snv-divider" />
 
       {/* navigate */}
-      <div className="sn-section">Navigate</div>
-      <button className="sn-btn" onClick={() => goto("Feed")}>📰 Feed</button>
-      <button className="sn-btn" onClick={() => goto("Chat")}>💬 Chat</button>
-      <button className="sn-btn" onClick={() => goto("Messages")}>📬 Messages</button>
-      <button className="sn-btn" onClick={() => goto("Profile")}>👤 Profile</button>
-      <button className="sn-btn" onClick={() => goto("Proposals")}>📑 Proposals</button>
-      <button className="sn-btn" onClick={() => goto("Decisions")}>✅ Decisions</button>
-      <button className="sn-btn" onClick={() => goto("Execution")}>⚙️ Execution</button>
+      <div className="snv-section">Navigate</div>
+      <button className="snv-btn" onClick={() => goto("Feed")}>📰 Feed</button>
+      <button className="snv-btn" onClick={() => goto("Chat")}>💬 Chat</button>
+      <button className="snv-btn" onClick={() => goto("Messages")}>📬 Messages</button>
+      <button className="snv-btn" onClick={() => goto("Profile")}>👤 Profile</button>
+      <button className="snv-btn" onClick={() => goto("Proposals")}>📑 Proposals</button>
+      <button className="snv-btn" onClick={() => goto("Decisions")}>✅ Decisions</button>
+      <button className="snv-btn" onClick={() => goto("Execution")}>⚙️ Execution</button>
 
-      {/* optional pages if you add them later */}
-      <button className="sn-btn ghost" onClick={() => goto("Coin")}>🪙 Coin</button>
-      <button className="sn-btn ghost" onClick={() => goto("Forks")}>🍴 Forks</button>
-      <button className="sn-btn ghost" onClick={() => goto("Remixes")}>🎛️ Remixes</button>
+      {/* optional */}
+      <button className="snv-btn ghost" onClick={() => goto("Coin")}>🪙 Coin</button>
+      <button className="snv-btn ghost" onClick={() => goto("Forks")}>🍴 Forks</button>
+      <button className="snv-btn ghost" onClick={() => goto("Remixes")}>🎛️ Remixes</button>
 
-      <div className="sn-divider" />
+      <div className="snv-divider" />
 
       {/* premium */}
-      <div className="sn-subheader">Premium</div>
-      <button className="sn-btn" onClick={() => goto("Music")}>🎶 Music</button>
-      <button className="sn-btn" onClick={() => goto("Agents")}>🚀 Agents</button>
-      <button className="sn-btn" onClick={() => goto("Enter Metaverse")}>🌌 Enter Metaverse</button>
-      <div className="sn-caption small">
-        Mathematically sucked into a superNova_2177 void – stay tuned for 3D immersion
+      <div className="snv-subheader">Premium</div>
+      <button className="snv-btn" onClick={() => goto("Music")}>🎶 Music</button>
+      <button className="snv-btn" onClick={() => goto("Agents")}>🚀 Agents</button>
+      <button className="snv-btn" onClick={() => goto("Enter Metaverse")}>🌌 Enter Metaverse</button>
+
+      <div className="snv-caption small">
+        Mathematically sucked into a superNova_2177 void — stay tuned for 3D immersion
       </div>
 
-      <div className="sn-divider" />
-      <button className="sn-btn" onClick={() => goto("Settings")}>⚙️ Settings</button>
+      <div className="snv-divider" />
+      <button className="snv-btn" onClick={() => goto("Settings")}>⚙️ Settings</button>
     </aside>
   );
 }
