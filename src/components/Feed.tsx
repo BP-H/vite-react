@@ -1,7 +1,17 @@
 // src/components/Feed.tsx
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  createContext,
+  useContext,
+  ReactNode,
+  useCallback,
+} from "react";
+import type { MutableRefObject } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, ContactShadows } from "@react-three/drei";
+import { Float, ContactShadows, View, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
 
 /** --- demo data -------------------------------------------------------- */
@@ -30,8 +40,26 @@ function makeBatch(offset: number, size = 12): Post[] {
   });
 }
 
-/** --- tiny 3D card (self-contained Canvas, no <View/> needed) ---------- */
+/** --- shared canvas context ------------------------------------------- */
+type MiniScene = {
+  id: number;
+  ref: MutableRefObject<HTMLElement | null>;
+  element: ReactNode;
+  visible: boolean;
+};
+
+const MiniSceneContext = createContext<{
+  register: (ref: MutableRefObject<HTMLElement | null>, element: ReactNode) => number;
+  unregister: (id: number) => void;
+  setVisible: (id: number, v: boolean) => void;
+} | null>(null);
+
+/** --- tiny 3D card ----------------------------------------------------- */
 function MiniPortal() {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const ctx = useContext(MiniSceneContext)!;
+  const [id, setId] = useState<number | null>(null);
+
   function Rock({ seed = 0 }: { seed?: number }) {
     const mesh = useRef<THREE.Mesh>(null!);
     const color = useMemo(
@@ -39,7 +67,6 @@ function MiniPortal() {
       [seed]
     );
     useFrame((_, d) => {
-      if (!mesh.current) return;
       mesh.current.rotation.x += 0.25 * d;
       mesh.current.rotation.y -= 0.18 * d;
     });
@@ -52,10 +79,7 @@ function MiniPortal() {
   }
   function Torus() {
     const mesh = useRef<THREE.Mesh>(null!);
-    useFrame((_, d) => {
-      if (!mesh.current) return;
-      mesh.current.rotation.y -= 0.35 * d;
-    });
+    useFrame((_, d) => (mesh.current.rotation.y -= 0.35 * d));
     return (
       <mesh ref={mesh} castShadow receiveShadow>
         <torusKnotGeometry args={[0.26, 0.08, 100, 16]} />
@@ -64,8 +88,52 @@ function MiniPortal() {
     );
   }
 
+  // register this portal's scene with the shared canvas
+  useEffect(() => {
+    const element = (
+      <>
+        <PerspectiveCamera makeDefault position={[0, 0, 3.2]} fov={50} />
+        <color attach="background" args={["#0a0b10"]} />
+        <ambientLight intensity={0.8} />
+        <directionalLight position={[2, 3, 2]} intensity={0.8} />
+        <Float speed={1} rotationIntensity={0.3} floatIntensity={0.8}>
+          <group position={[-1.2, 0.2, 0]}>
+            <Rock seed={1} />
+          </group>
+        </Float>
+        <Float speed={0.9} rotationIntensity={0.4} floatIntensity={0.9}>
+          <group position={[0.2, 0.35, -0.3]}>
+            <Torus />
+          </group>
+        </Float>
+        <ContactShadows
+          position={[0, -0.85, 0]}
+          opacity={0.25}
+          scale={10}
+          blur={1.6}
+          far={2}
+        />
+      </>
+    );
+    const newId = ctx.register(ref as MutableRefObject<HTMLElement | null>, element);
+    setId(newId);
+    return () => ctx.unregister(newId);
+  }, [ctx]);
+
+  // observe visibility to pause when off-screen
+  useEffect(() => {
+    if (!ref.current || id === null) return;
+    const io = new IntersectionObserver(
+      ([e]) => ctx.setVisible(id, e.isIntersecting),
+      { rootMargin: "200px 0px" }
+    );
+    io.observe(ref.current);
+    return () => io.disconnect();
+  }, [ctx, id]);
+
   return (
     <div
+      ref={ref}
       style={{
         position: "relative",
         height: 220,
@@ -97,23 +165,6 @@ function MiniPortal() {
           filter: "blur(18px)",
         }}
       />
-
-      <Canvas camera={{ position: [0, 0, 3.2], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: false }}>
-        <color attach="background" args={["#0a0b10"]} />
-        <ambientLight intensity={0.8} />
-        <directionalLight position={[2, 3, 2]} intensity={0.8} />
-        <Float speed={1} rotationIntensity={0.3} floatIntensity={0.8}>
-          <group position={[-1.2, 0.2, 0]}>
-            <Rock seed={1} />
-          </group>
-        </Float>
-        <Float speed={0.9} rotationIntensity={0.4} floatIntensity={0.9}>
-          <group position={[0.2, 0.35, -0.3]}>
-            <Torus />
-          </group>
-        </Float>
-        <ContactShadows position={[0, -0.85, 0]} opacity={0.25} scale={10} blur={1.6} far={2} />
-      </Canvas>
     </div>
   );
 }
@@ -125,6 +176,32 @@ export default function Feed() {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  const [scenes, setScenes] = useState<MiniScene[]>([]);
+  const idRef = useRef(0);
+
+  const register = useCallback(
+    (ref: MutableRefObject<HTMLElement | null>, element: ReactNode) => {
+      const id = ++idRef.current;
+      setScenes((s) => [...s, { id, ref, element, visible: false }]);
+      return id;
+    },
+    []
+  );
+
+  const unregister = useCallback((id: number) => {
+    setScenes((s) => s.filter((p) => p.id !== id));
+  }, []);
+
+  const setVisible = useCallback((id: number, v: boolean) => {
+    setScenes((s) => s.map((p) => (p.id === id ? { ...p, visible: v } : p)));
+  }, []);
+
+  const ctxValue = useMemo(() => ({ register, unregister, setVisible }), [
+    register,
+    unregister,
+    setVisible,
+  ]);
 
   useEffect(() => {
     if (!sentinelRef.current) return;
@@ -153,44 +230,74 @@ export default function Feed() {
   }, [page, loading, hasMore]);
 
   return (
-    <>
-      {items.map((p) => (
-        <article key={p.id} className="card post">
-          <header>
-            <strong>{p.author}</strong>
-            <span className="muted"> • {p.time}</span>
-          </header>
+    <MiniSceneContext.Provider value={ctxValue}>
+      <>
+        {items.map((p) => (
+          <article key={p.id} className="card post">
+            <header>
+              <strong>{p.author}</strong>
+              <span className="muted"> • {p.time}</span>
+            </header>
 
-          <p style={{ margin: "8px 0 10px" }}>{p.text}</p>
+            <p style={{ margin: "8px 0 10px" }}>{p.text}</p>
 
-          {p.kind === "image" && (
-            <div className="media">
-              <img
-                src={p.image}
-                alt="post"
-                loading="lazy"
-                decoding="async"
-                style={{ display: "block", width: "100%", height: "auto" }}
-              />
-            </div>
-          )}
+            {p.kind === "image" && (
+              <div className="media">
+                <img
+                  src={p.image}
+                  alt="post"
+                  loading="lazy"
+                  decoding="async"
+                  style={{ display: "block", width: "100%", height: "auto" }}
+                />
+              </div>
+            )}
 
-          {p.kind === "portal3d" && <MiniPortal />}
+            {p.kind === "portal3d" && <MiniPortal />}
 
-          <footer>
-            <button className="chip">Like</button>
-            <button className="chip">Comment</button>
-            <button className="chip">Share</button>
-          </footer>
-        </article>
-      ))}
+            <footer>
+              <button className="chip">Like</button>
+              <button className="chip">Comment</button>
+              <button className="chip">Share</button>
+            </footer>
+          </article>
+        ))}
 
-      <div
-        ref={sentinelRef}
-        style={{ height: 44, display: "grid", placeItems: "center", color: "var(--ink-2)" }}
-      >
-        {loading ? "Loading…" : hasMore ? "" : "— End —"}
-      </div>
-    </>
+        <div
+          ref={sentinelRef}
+          style={{
+            height: 44,
+            display: "grid",
+            placeItems: "center",
+            color: "var(--ink-2)",
+          }}
+        >
+          {loading ? "Loading…" : hasMore ? "" : "— End —"}
+        </div>
+
+        {/* Shared, fixed canvas rendering only visible mini-scenes */}
+        <Canvas
+          style={{
+            position: "fixed",
+            inset: 0,
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+          dpr={[1, 1.5]}
+          gl={{ antialias: false, powerPreference: "high-performance" }}
+        >
+          {scenes
+            .filter((s) => s.visible)
+            .map((s) => (
+              <View
+                key={s.id}
+                track={s.ref as MutableRefObject<HTMLElement>}
+              >
+                {s.element}
+              </View>
+            ))}
+        </Canvas>
+      </>
+    </MiniSceneContext.Provider>
   );
 }
