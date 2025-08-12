@@ -1,81 +1,48 @@
-// src/components/FloatingPortalAssistant.tsx
-import { useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Float, ContactShadows } from '@react-three/drei';
+import * as THREE from 'three';
+import { useRef } from 'react';
 
 function Orb() {
-  const ref = useRef<THREE.Mesh>(null!);
-  useFrame((_, d) => { ref.current.rotation.y += 0.6 * d; ref.current.rotation.x += 0.15 * d; });
+  const m = useRef<THREE.Mesh>(null!);
+  useFrame((_, d) => {
+    m.current.rotation.x += 0.45 * d;
+    m.current.rotation.y += 0.35 * d;
+  });
   return (
-    <mesh ref={ref}>
+    <mesh ref={m}>
       <icosahedronGeometry args={[0.9, 0]} />
-      <meshStandardMaterial color="#b9b5ff" metalness={0.4} roughness={0.25} />
+      <meshStandardMaterial color="#b8a6ff" metalness={0.6} roughness={0.25} />
     </mesh>
   );
 }
 
 export default function FloatingPortalAssistant() {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [open, setOpen] = useState(false);
-  const [drag, setDrag] = useState<{ x:number; y:number } | null>(null);
-  const [pos, setPos] = useState<{ x:number; y:number }>({ x: 22, y: 22 });
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    const wrap = wrapRef.current; if (!wrap) return;
-    wrap.setPointerCapture(e.pointerId);
-    setDrag({ x: e.clientX - pos.x, y: e.clientY - pos.y });
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!drag) return;
-    setPos({ x: Math.max(8, window.innerWidth - (e.clientX - drag.x) - 64), y: Math.max(8, e.clientY - drag.y) });
-  };
-  const onPointerUp = (e: React.PointerEvent) => {
-    const wrap = wrapRef.current; if (wrap) wrap.releasePointerCapture(e.pointerId);
-    setDrag(null);
-  };
-
   return (
     <div
-      ref={wrapRef}
-      className="assist-wrap"
-      style={{ right: pos.x, bottom: pos.y }}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
+      style={{
+        position: 'fixed',
+        right: 16,
+        bottom: 16,
+        width: 280,
+        height: 180,
+        zIndex: 40,
+        borderRadius: 16,
+        overflow: 'hidden',
+        border: '1px solid var(--line)',
+        boxShadow: '0 18px 40px rgba(18,24,40,.18)',
+        background: '#0a0b10',
+      }}
     >
-      <div className="assist-orb" onClick={() => setOpen((v) => !v)} title="Open assistant">
-        <Canvas dpr={[1, 1.5]} gl={{ antialias: true }} camera={{ position: [0, 0, 3], fov: 50 }}>
-          <ambientLight intensity={0.9} />
-          <directionalLight position={[2, 3, 2]} intensity={0.9} />
-          {/* soft background */}
-          <color attach="background" args={["#0c0f16"]} />
+      <Canvas camera={{ position: [0, 0, 3.2], fov: 50 }} dpr={[1, 1.5]} gl={{ antialias: false }}>
+        <color attach="background" args={['#0a0b10']} />
+        <ambientLight intensity={0.9} />
+        <directionalLight position={[2, 3, 2]} intensity={0.9} />
+        <Float speed={1} rotationIntensity={0.35} floatIntensity={0.9}>
           <Orb />
-        </Canvas>
-      </div>
-
-      {open && (
-        <div className="assist-pop">
-          <div className="assist-head">superNova Assistant</div>
-          <div className="assist-body">
-            <div className="muted">How can I help?</div>
-            <div style={{ height: 8 }} />
-            <div>• Try: “Summarize my latest posts”</div>
-            <div>• Or: “Draft an announcement with neon tone”</div>
-          </div>
-          <div style={{ padding: 10, borderTop: "1px solid var(--line)" }}>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                alert("Hook this up to your API later ✨");
-              }}
-            >
-              <div className="assist-row">
-                <input className="assist-input" placeholder="Ask anything…" />
-                <button className="btn btn--primary" type="submit">Send</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+        </Float>
+        <ContactShadows position={[0, -1, 0]} opacity={0.25} scale={10} blur={1.6} far={2} />
+      </Canvas>
     </div>
   );
 }
