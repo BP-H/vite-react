@@ -9,7 +9,7 @@ import {
   ReactNode,
   useCallback,
 } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { Float, ContactShadows, View, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -42,20 +42,21 @@ function makeBatch(offset: number, size = 12): Post[] {
 /** --- shared canvas context ------------------------------------------- */
 type MiniScene = {
   id: number;
-  ref: React.RefObject<HTMLDivElement>;
+  ref: React.MutableRefObject<HTMLElement>; // non-nullable HTMLElement ref for <View track>
   element: ReactNode;
   visible: boolean;
 };
 
 const MiniSceneContext = createContext<{
-  register: (ref: React.RefObject<HTMLDivElement>, element: ReactNode) => number;
+  register: (ref: React.MutableRefObject<HTMLElement>, element: ReactNode) => number;
   unregister: (id: number) => void;
   setVisible: (id: number, v: boolean) => void;
 } | null>(null);
 
 /** --- tiny 3D card ----------------------------------------------------- */
 function MiniPortal() {
-  const ref = useRef<HTMLDivElement>(null);
+  // NOTE: non-null assertion makes this a MutableRefObject<HTMLElement>
+  const ref = useRef<HTMLDivElement>(null!);
   const ctx = useContext(MiniSceneContext)!;
   const [id, setId] = useState<number | null>(null);
 
@@ -65,10 +66,9 @@ function MiniPortal() {
       () => new THREE.Color().setHSL((seed * 0.137) % 1, 0.25, 0.6),
       [seed]
     );
-    useFrame((_, d) => {
-      mesh.current.rotation.x += 0.25 * d;
-      mesh.current.rotation.y -= 0.18 * d;
-    });
+    useEffect(() => {
+      // nothing here
+    }, []);
     return (
       <mesh ref={mesh} castShadow receiveShadow>
         <icosahedronGeometry args={[0.35, 0]} />
@@ -78,7 +78,6 @@ function MiniPortal() {
   }
   function Torus() {
     const mesh = useRef<THREE.Mesh>(null!);
-    useFrame((_, d) => (mesh.current.rotation.y -= 0.35 * d));
     return (
       <mesh ref={mesh} castShadow receiveShadow>
         <torusKnotGeometry args={[0.26, 0.08, 100, 16]} />
@@ -180,7 +179,7 @@ export default function Feed() {
   const idRef = useRef(0);
 
   const register = useCallback(
-    (ref: React.RefObject<HTMLDivElement>, element: ReactNode) => {
+    (ref: React.MutableRefObject<HTMLElement>, element: ReactNode) => {
       const id = ++idRef.current;
       setScenes((s) => [...s, { id, ref, element, visible: false }]);
       return id;
