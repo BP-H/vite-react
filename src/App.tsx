@@ -71,4 +71,11 @@ export default function App() {
       />
     </div>
   );
+  import ChatDock from "./components/ChatDock";
+// ...
+<>
+  {/* your world/feed */}
+  <ChatDock />
+  <AssistantOrb />
+</>
 }
