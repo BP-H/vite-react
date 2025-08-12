@@ -1,9 +1,11 @@
-import { useCallback, useMemo, useState } from "react";
+// src/App.tsx
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./styles.css";
 import BackgroundVoid from "./three/BackgroundVoid";
 import Shell from "./components/Shell";
 import { Post } from "./types";
 import World3D from "./components/World3D";
+import bus from "./lib/bus";
 
 export default function App() {
   const [mode, setMode] = useState<"feed" | "world">("feed");
@@ -13,13 +15,13 @@ export default function App() {
   const enterWorld = useCallback((p: Post, at?: { x: number; y: number }) => {
     setSelected(p);
     setBurst({ on: true, x: at?.x ?? window.innerWidth / 2, y: at?.y ?? window.innerHeight / 2 });
-    setTimeout(() => {
-      setMode("world");
-      setBurst((b) => ({ ...b, on: false }));
-    }, 650);
+    setTimeout(() => { setMode("world"); setBurst((b) => ({ ...b, on: false })); }, 650);
   }, []);
 
   const leaveWorld = useCallback(() => setMode("feed"), []);
+
+  // allow voice "back/exit" to leave world
+  useEffect(() => bus.on("ui:leave", () => setMode("feed")), []);
 
   const overlayStyle = useMemo(
     () => ({ "--px": `${burst.x}px`, "--py": `${burst.y}px` }) as React.CSSProperties,
