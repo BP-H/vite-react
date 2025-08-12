@@ -52,6 +52,7 @@ export default function App() {
       {/* Foreground UI */}
       <div className="apple-white-bg" style={{ position: "relative", zIndex: 1 }}>
         {mode === "feed" ? (
+          // Shell renders the feed + AssistantOrb; no need to import/use AssistantOrb here
           <Shell onPortal={enterWorld} hideOrb={false} />
         ) : (
           <main className="content" style={{ padding: 0 }}>
@@ -71,11 +72,4 @@ export default function App() {
       />
     </div>
   );
-  import ChatDock from "./components/ChatDock";
-// ...
-<>
-  {/* your world/feed */}
-  <ChatDock />
-  <AssistantOrb />
-</>
 }
