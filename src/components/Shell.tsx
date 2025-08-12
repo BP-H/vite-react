@@ -1,31 +1,43 @@
 // src/components/Shell.tsx
+import { useEffect } from "react";
 import Sidebar from "./Sidebar";
 import AssistantOrb from "./AssistantOrb";
 import Feed2D from "./Feed2D";
 import { Post } from "../types";
 import bus from "../lib/bus";
-import { useEffect } from "react";
 
-export default function Shell({ onPortal, hideOrb = false }: { onPortal: (p: Post, at?: {x:number;y:number}) => void; hideOrb?: boolean }) {
-  // simple nav bus (optional): route labels to your feed for now
+type XY = { x: number; y: number };
+
+// NOTE: App passes `enterWorld(p, at?)`, so keep `at` optional here.
+export default function Shell({
+  onPortal,
+  hideOrb = false,
+}: {
+  onPortal: (p: Post, at?: XY) => void;
+  hideOrb?: boolean;
+}) {
+  // optional: react to sidebar nav events
   useEffect(() => {
     return bus.on("nav:goto", ({ label }: { label: string }) => {
-      // You can wire real routing later; for now we just log/ignore.
       console.info("nav:goto", label);
     });
   }, []);
+
+  // Bridge to Feed2D's expected signature: (p, at: XY) => void
+  const handleEnterWorld = (p: Post, at: XY) => onPortal(p, at);
 
   return (
     <div className="layout">
       <Sidebar />
       <div className="content-col">
-        <Feed2D posts={[]} onOpenWorld={(p?: Post) => {
-          const at = { x: window.innerWidth - 56, y: window.innerHeight - 56 };
-          onPortal?.(p as Post, at);
-        }}/>
+        {/* Feed2D expects onEnterWorld only (no posts prop) */}
+        <Feed2D onEnterWorld={handleEnterWorld} />
       </div>
 
-      {!hideOrb && <AssistantOrb onPortal={(post, at) => onPortal(post, at)} />}
+      {!hideOrb && (
+        // AssistantOrb expects (post, at: XY). We forward to onPortal.
+        <AssistantOrb onPortal={(post, at) => onPortal(post, at)} />
+      )}
     </div>
   );
 }
