@@ -49,21 +49,48 @@ export default function AssistantOrb({
     });
   }, [onPortal]);
 
-  // ---- voice: continuous listen + talk back --------------------------------
+  // ---- voice: continuous listen + talk back (half-duplex) ------------------
   const recRef = useRef<SpeechRecognitionLike | null>(null);
   const listeningRef = useRef(false);
   const speakingRef = useRef(false);
   const restartOnEndRef = useRef(false);
+  const firstGestureRef = useRef(false);
   const lastHoverRef = useRef<{ post: Post; x: number; y: number } | null>(null);
 
   const [micOn, setMicOn] = useState(false);
   const [toast, setToast] = useState("");
 
-  // let orb know which card you're on so "enter world" can target it
+  // track hovered card so “enter world” knows where to fly
   useEffect(() => bus.on("feed:hover", (p) => (lastHoverRef.current = p)), []);
 
-  // request mic once so browser remembers permission for this origin
+  // Unlock TTS (voices) + satisfy autoplay after first user click
+  async function unlockAudioAndVoices() {
+    if (firstGestureRef.current) return;
+    firstGestureRef.current = true;
+    try {
+      const synth: any = (window as any).speechSynthesis;
+      synth?.cancel?.();
+      await new Promise<void>((resolve) => {
+        const done = () => resolve();
+        const timeout = setTimeout(done, 400);
+        synth?.addEventListener?.("voiceschanged", () => { clearTimeout(timeout); done(); }, { once: true });
+      });
+      const Utter = (window as any).SpeechSynthesisUtterance;
+      if (Utter && synth) {
+        const u = new Utter(" ");
+        u.volume = 0;
+        synth.speak(u);
+        synth.cancel();
+      }
+    } catch {}
+  }
+
+  // Ask mic once; HTTPS required off localhost
   async function ensureMic(): Promise<boolean> {
+    if (!location.hostname.includes("localhost") && location.protocol !== "https:") {
+      setToast("Mic needs HTTPS (use Vercel prod or localhost).");
+      return false;
+    }
     try {
       const stAny = (navigator as any).permissions?.query
         ? await (navigator as any).permissions.query({ name: "microphone" as any })
@@ -83,25 +110,45 @@ export default function AssistantOrb({
   function speak(text: string): Promise<void> {
     return new Promise((resolve) => {
       try {
-        const synth = window.speechSynthesis as any;
+        const synth: any = (window as any).speechSynthesis;
         const Utter = (window as any).SpeechSynthesisUtterance;
         if (!synth || !Utter) return resolve();
+
         synth.cancel();
         const u = new Utter(text);
         const v = synth.getVoices?.().find((vv: any) => vv?.lang?.startsWith?.("en"));
         if (v) u.voice = v;
         u.rate = 1; u.pitch = 1; u.lang = "en-US";
-        u.onstart = () => { speakingRef.current = true; try { recRef.current?.stop(); } catch {} };
-        u.onend   = () => { speakingRef.current = false; if (micOn) try { recRef.current?.start(); } catch {}; resolve(); };
+
+        u.onstart = () => {
+          speakingRef.current = true;
+          // prevent auto-restart while we’re speaking
+          restartOnEndRef.current = false;
+          try { recRef.current?.stop(); } catch {}
+        };
+
+        u.onend = () => {
+          speakingRef.current = false;
+          // now safe to listen again
+          if (micOn) {
+            restartOnEndRef.current = true;
+            setTimeout(() => { try { recRef.current?.start(); } catch {} }, 200);
+          }
+          resolve();
+        };
+
         synth.speak(u);
-      } catch { resolve(); }
+      } catch {
+        resolve();
+      }
     });
   }
 
-  // recognizer lifecycle (one instance)
+  // recognizer lifecycle (single instance)
   useEffect(() => {
-    const Ctor = window.webkitSpeechRecognition || window.SpeechRecognition;
+    const Ctor = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     if (!Ctor) { setToast("Voice not supported"); return; }
+
     const rec: SpeechRecognitionLike = new Ctor();
     recRef.current = rec;
     rec.continuous = true;
@@ -109,12 +156,25 @@ export default function AssistantOrb({
     rec.lang = "en-US";
 
     rec.onstart = () => { listeningRef.current = true; setToast("Listening…"); };
-    rec.onerror = () => { setToast("Mic error"); };
+    rec.onerror = (e: any) => {
+      const code = e?.error || "mic error";
+      const map: Record<string,string> = {
+        "not-allowed": "Mic blocked — allow in site settings.",
+        "no-speech": "Didn’t catch that.",
+        "aborted": "Restarting…",
+        "audio-capture": "No mic found.",
+        "network": "Network error.",
+      };
+      setToast(map[code] || "Mic error");
+      if (micOn && !speakingRef.current) setTimeout(() => { try { rec.start(); } catch {} }, 400);
+    };
+
     rec.onend = () => {
       listeningRef.current = false;
       setToast(micOn ? "…" : "");
+      // only restart if we want to and we're not currently speaking
       if (restartOnEndRef.current && !speakingRef.current) {
-        try { rec.start(); } catch {}
+        setTimeout(() => { try { rec.start(); } catch {} }, 250);
       }
     };
 
@@ -135,7 +195,7 @@ export default function AssistantOrb({
 
       bus.emit("chat:add", { role: "user", text: final });
 
-      // very small command router
+      // tiny command router
       const t = final.toLowerCase();
       if ((/enter|open/.test(t)) && /(world|portal|void)/.test(t)) {
         const target = lastHoverRef.current ?? { post: DEFAULT_POST, x: window.innerWidth - 56, y: window.innerHeight - 56 };
@@ -149,7 +209,7 @@ export default function AssistantOrb({
         setToast(""); return;
       }
 
-      // fallback "assistant" reply — replace with your /api call when ready
+      // fallback reply — swap with your /api call when ready
       const reply = "Got it.";
       bus.emit("chat:add", { role: "assistant", text: reply });
       await speak(reply);
@@ -159,10 +219,21 @@ export default function AssistantOrb({
     return () => { try { rec.stop(); } catch {} };
   }, [micOn]);
 
+  // optional keepalive: if recognition drops silently, nudge it back
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (micOn && !listeningRef.current && !speakingRef.current) {
+        try { recRef.current?.start(); } catch {}
+      }
+    }, 4000);
+    return () => clearInterval(id);
+  }, [micOn]);
+
   async function startListening() {
+    await unlockAudioAndVoices();
     const ok = await ensureMic();
     if (!ok) {
-      setToast("Mic blocked — allow in site settings");
+      setToast("Mic blocked — allow in site settings / use HTTPS");
       bus.emit("chat:add", { role: "system", text: "Microphone blocked. Click the padlock → allow microphone." });
       return;
     }
