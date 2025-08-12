@@ -1,31 +1,27 @@
-// src/components/Shell.tsx
-import { PropsWithChildren } from 'react';
-import BackgroundVoid from '../three/BackgroundVoid';
-import AssistantOrb from './AssistantOrb';
-import PortalOverlay, { usePortal, useIsWorldRoute } from './PortalOverlay';
+import Sidebar from "./Sidebar";
+import Feed2D from "./Feed2D";
+import AssistantOrb from "./AssistantOrb";
+import { Post } from "../types";
 
-export default function Shell({ children }: PropsWithChildren) {
-  const portal = usePortal();
-  const inWorld = useIsWorldRoute();
+type Props = {
+  onPortal: (post: Post, at: { x: number; y: number }) => void;
+  hideOrb?: boolean;
+};
+
+export default function Shell({ onPortal, hideOrb = false }: Props) {
+  const openFromSidebar = () =>
+    onPortal(
+      { id: -1, author: "@proto_ai", title: "Prototype Moment", image: "" },
+      { x: window.innerWidth - 56, y: window.innerHeight - 56 }
+    );
 
   return (
-    <div className="shell">
-      {/* 3D lives behind everything */}
-      <BackgroundVoid />
-
-      {/* Foreground glass layer */}
-      <main className="shell-glass">
-        {children}
+    <div className="app-root">
+      <Sidebar onOpen={openFromSidebar} />
+      <main className="content">
+        <Feed2D onEnterWorld={onPortal} />
       </main>
-
-      {/* Floating assistant (hide on world route) */}
-      <AssistantOrb
-        hidden={inWorld}
-        onOpen={(x, y) => portal.open(x, y, '/world')}
-      />
-
-      {/* Expanding circle transition */}
-      <PortalOverlay ref={portal.ref} />
+      <AssistantOrb hidden={hideOrb} onPortal={onPortal} />
     </div>
   );
 }
