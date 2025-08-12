@@ -1,73 +1,75 @@
-import React from "react";
+import React, { useRef } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { Html, OrbitControls } from "@react-three/drei";
 
-type Feed2DProps = {
-  sucking: boolean;
-  onEnterPortal: (worldId: string) => void;
+type Props = {
+  worldId: string;
+  onBack: () => void;
 };
 
-const POSTS = [
-  { id: "prototype", user: "@proto_ai", title: "Prototype Moment" },
-  { id: "symbolic", user: "@neonfork", title: "Symbolic Feed" },
-  { id: "ocean", user: "@superNova_2177", title: "Ocean Study" },
-];
+function FloatingTile(props: { position: [number, number, number]; label: string }) {
+  const ref = useRef<THREE.Mesh>(null!);
+  useFrame((_, t) => {
+    if (!ref.current) return;
+    ref.current.position.y = props.position[1] + Math.sin(t + props.position[0]) * 0.2;
+    ref.current.rotation.z = Math.sin(t * 0.3) * 0.05;
+  });
 
-export default function Feed2D({ sucking, onEnterPortal }: Feed2DProps) {
   return (
-    <div className={`feed-layout ${sucking ? "is-sucking" : ""}`}>
-      <aside className="feed-sidebar">
-        <div className="sb-title">Sidebar</div>
-        <button
-          className="portal-chip"
-          aria-label="Open Portal"
-          onClick={() => onEnterPortal("portal")}
-        >
-          Open Portal
-        </button>
-        <div className="sb-line" />
-        <div className="sb-caption">
-          Seamless 2D/3D feed. Cards feel 2D on rails with frosted glass between
-          them. Tap the portal to dissolve into the bright white void.
-        </div>
-      </aside>
+    <group>
+      <mesh ref={ref} position={props.position} castShadow>
+        <boxGeometry args={[2.8, 1.4, 0.08]} />
+        {/* Subtle gray so it reads in a white void */}
+        <meshStandardMaterial color="#d0d3d8" roughness={0.7} metalness={0.05} />
+      </mesh>
+      <Html center position={[props.position[0], props.position[1], props.position[2] + 0.12]}>
+        <div className="tile-label">{props.label}</div>
+      </Html>
+    </group>
+  );
+}
 
-      <main className="feed-stream">
-        {POSTS.map((p, i) => (
-          <article
-            key={p.id}
-            className={`card ${sucking ? "suck-to-void" : ""}`}
-            style={{ animationDelay: `${i * 90}ms` }}
-          >
-            <header className="card-h">
-              <div className="card-user">{p.user}</div>
-              <div className="card-dot">•</div>
-              <div className="card-demo">demo</div>
-            </header>
+export default function World3D({ worldId, onBack }: Props) {
+  return (
+    <div className="world-root">
+      <button className="back-pill" onClick={onBack}>
+        Back to Feed
+      </button>
 
-            <h3 className="card-title">{p.title}</h3>
+      <div className="world-title">Portal • {worldId}</div>
 
-            <div className="card-media">
-              {/* Low-poly / world preview placeholder */}
-              <div className="media-sheen" />
-              <div className="grid-frost" />
-            </div>
+      <Canvas
+        className="world-canvas"
+        shadows
+        camera={{ position: [0, 2.2, 6], fov: 45 }}
+        gl={{ antialias: true }}
+      >
+        {/* White void */}
+        <color attach="background" args={["#ffffff"]} />
+        <fog attach="fog" args={["#ffffff", 7, 26]} />
 
-            <footer className="card-f">
-              <button
-                className="pill"
-                onClick={() => onEnterPortal(p.id)}
-                aria-label={`Enter ${p.title}`}
-              >
-                Enter world
-              </button>
-              <button className="pill">Like</button>
-              <button className="pill">Share</button>
-            </footer>
-          </article>
-        ))}
-      </main>
+        <ambientLight intensity={0.6} />
+        <directionalLight
+          position={[4, 8, 6]}
+          intensity={1.2}
+          castShadow
+          shadow-mapSize-width={1024}
+          shadow-mapSize-height={1024}
+        />
 
-      {/* White wash that blooms the UI as everything gets sucked into the void */}
-      {sucking && <div className="void-wash" aria-hidden />}
+        {/* A few floating "posts" in 3D */}
+        <FloatingTile position={[-2.2, 0.2, 0]} label="@proto_ai • Prototype Moment" />
+        <FloatingTile position={[0.5, -0.3, -0.6]} label="@neonfork • Symbolic Feed" />
+        <FloatingTile position={[2.6, 0.4, 0.3]} label="@superNova_2177 • Ocean Study" />
+
+        {/* Center piece (low-poly torus knot) */}
+        <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
+          <torusKnotGeometry args={[0.9, 0.22, 160, 12]} />
+          <meshStandardMaterial color="#7c83ff" roughness={0.35} metalness={0.2} />
+        </mesh>
+
+        <OrbitControls enablePan={false} />
+      </Canvas>
     </div>
   );
 }
