@@ -18,7 +18,6 @@ export default function App() {
   const [selected, setSelected] = useState<Post | null>(null);
   const flashRef = useRef<HTMLDivElement | null>(null);
 
-  // white-flash “sucked into the void” transition
   const portalTo = (post: Post) => {
     setSelected(post);
     const el = flashRef.current;
@@ -44,12 +43,8 @@ export default function App() {
 
   return (
     <div className="app">
-      {mode === "feed" && (
-        <Feed2D posts={posts} onEnterWorld={portalTo} />
-      )}
-      {mode === "world" && selected && (
-        <World3D post={selected} onBack={backToFeed} />
-      )}
+      {mode === "feed" && <Feed2D posts={posts} onEnterWorld={portalTo} />}
+      {mode === "world" && selected && <World3D post={selected} onBack={backToFeed} />}
       <div ref={flashRef} className="flash" />
     </div>
   );
