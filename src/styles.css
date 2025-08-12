@@ -1,0 +1,118 @@
+/* Global – light, Apple-like canvas */
+:root {
+  --bg: #f7f8fb;
+  --panel: rgba(255,255,255,0.75);
+  --panel-border: rgba(0,0,0,0.08);
+  --ink: #16181d;
+  --muted: #6b7280;
+  --accent: #6a73ff;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"; color: var(--ink); }
+
+.apple-white-bg {
+  /* subtle arcs + grid, very light */
+  background:
+    radial-gradient(1200px 800px at 80% -10%, rgba(0,0,0,0.04), rgba(0,0,0,0) 60%),
+    radial-gradient(1400px 1000px at -20% 110%, rgba(0,0,0,0.04), rgba(0,0,0,0) 60%),
+    var(--bg);
+}
+
+/* Layout */
+.app-root { display: grid; grid-template-columns: 280px 1fr; min-height: 100vh; }
+
+.sidebar {
+  border-right: 1px solid var(--panel-border);
+  background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6));
+  backdrop-filter: blur(16px) saturate(140%);
+}
+.sidebar-inner { padding: 18px; position: sticky; top: 0; }
+.brand { font-weight: 700; font-size: 18px; margin-bottom: 10px; }
+
+.siri-orb {
+  appearance: none; border: 1px solid var(--panel-border);
+  border-radius: 12px; padding: 10px 12px; width: 100%;
+  background: linear-gradient(180deg, #ffffff, #f1f3f8);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.7) inset, 0 8px 20px rgba(0,0,0,0.08);
+  font-weight: 600;
+}
+.siri-orb:hover { box-shadow: 0 0 0 3px rgba(106,115,255,0.18), 0 8px 22px rgba(0,0,0,0.1); }
+
+.side-links { margin-top: 18px; display: grid; gap: 6px; color: var(--muted); }
+.side-links .section { margin-top: 10px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.side-links a { padding: 8px 6px; border-radius: 8px; }
+.side-links a:hover { background: rgba(0,0,0,0.04); color: var(--ink); }
+
+.content { padding: 24px; }
+
+/* Feed */
+.feed-wrap { max-width: 920px; margin: 0 auto; }
+.feed-header { display:flex; align-items: center; gap:12px; }
+.feed-header h1 { margin:0; font-size: 22px; }
+.sweep { flex:1; height: 8px; border-radius: 999px; background: linear-gradient(90deg, rgba(106,115,255,0.25), rgba(106,115,255,0)); border: 1px solid var(--panel-border); }
+
+.cards { display: grid; gap: 18px; margin-top: 16px; }
+
+.card {
+  border: 1px solid var(--panel-border);
+  border-radius: 16px; padding: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.65));
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  position: relative; overflow: hidden;
+}
+.frosted::before {
+  /* frosted layer inside the card content area */
+  content:""; position: absolute; inset: 54px 12px 58px; border-radius: 14px;
+  background: linear-gradient(110deg, rgba(255,255,255,0.55), rgba(255,255,255,0.35));
+  backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.5);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 1px 18px rgba(0,0,0,0.06);
+  pointer-events: none;
+}
+
+.card-head { position: relative; z-index: 2; }
+.card-head .byline { display:flex; align-items:center; gap:6px; color: var(--muted); font-size: 12px; }
+.card-head .handle { font-weight: 600; color: var(--ink); }
+.card-head .dot { opacity: .4; }
+.card-head h2 { margin: 4px 0 10px; font-size: 18px; }
+
+.card-canvas { position: relative; z-index: 2; height: 180px; border-radius: 14px; overflow: hidden; }
+.mini-canvas { width: 100%; height: 100%; display: block; }
+
+.card-actions { margin-top: 12px; display:flex; gap:8px; z-index: 2; position: relative; }
+.pill {
+  appearance: none;
+  border: 1px solid var(--panel-border);
+  background: #ffffff;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.pill.ghost { background: rgba(255,255,255,0.6); }
+
+/* World */
+.world-wrap { position: relative; height: calc(100vh - 48px); }
+.world-topbar {
+  position: absolute; top: 12px; left: 12px; right: 12px; z-index: 5;
+  display:flex; gap: 10px; align-items: center;
+}
+.world-topbar .crumb { font-size: 12px; color: var(--muted); }
+
+/* Portal overlay – white circle expands from click */
+.portal-overlay {
+  position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+  --px: 50vw; --py: 50vh;
+  --r0: 0px; --r1: 0px;
+  background: radial-gradient(circle at var(--px) var(--py), rgba(255,255,255,1) 0, rgba(255,255,255,1) 60%, rgba(255,255,255,0.98) 70%, rgba(255,255,255,0.0) 71%);
+  clip-path: circle(var(--r0) at var(--px) var(--py));
+  opacity: 0;
+  transition:
+    clip-path .65s cubic-bezier(.22,.61,.36,1),
+    opacity .2s ease;
+}
+.portal-overlay.on {
+  --r0: 160vmax;
+  opacity: 1;
+}
