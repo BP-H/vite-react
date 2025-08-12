@@ -1,21 +1,19 @@
 // src/App.tsx
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import "./styles.css";
-import BackgroundVoid from "./three/BackgroundVoid";
 import Shell from "./components/Shell";
-import World3D from "./components/World3D";
 import ChatDock from "./components/ChatDock";
 import { Post } from "./types";
 import bus from "./lib/bus";
 
+// code-split the heavy bits
+const BackgroundVoid = lazy(() => import("./three/BackgroundVoid"));
+const World3D = lazy(() => import("./components/World3D"));
+
 export default function App() {
   const [mode, setMode] = useState<"feed" | "world">("feed");
   const [selected, setSelected] = useState<Post | null>(null);
-  const [burst, setBurst] = useState<{ on: boolean; x: number; y: number }>({
-    on: false,
-    x: 0,
-    y: 0,
-  });
+  const [burst, setBurst] = useState<{ on: boolean; x: number; y: number }>({ on: false, x: 0, y: 0 });
 
   const enterWorld = useCallback((p: Post, at?: { x: number; y: number }) => {
     setSelected(p);
@@ -46,17 +44,49 @@ export default function App() {
 
   return (
     <div style={{ position: "relative" }}>
-      {/* Always-on minimalist 3D background */}
-      <BackgroundVoid />
+      {/* Background is lazy — show a soft gradient while loading */}
+      <Suspense
+        fallback={
+          <div
+            aria-hidden
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 0,
+              background:
+                "radial-gradient(120% 100% at -20% -20%, rgba(255,75,208,.18), transparent 60%), linear-gradient(180deg,#0f1117,#10131a)",
+            }}
+          />
+        }
+      >
+        <BackgroundVoid />
+      </Suspense>
 
       {/* Foreground UI */}
       <div className="apple-white-bg" style={{ position: "relative", zIndex: 1 }}>
         {mode === "feed" ? (
-          // Shell renders the feed + AssistantOrb; no need to import/use AssistantOrb here
+          // Shell renders the feed + AssistantOrb
           <Shell onPortal={enterWorld} hideOrb={false} />
         ) : (
           <main className="content" style={{ padding: 0 }}>
-            <World3D selected={selected} onBack={leaveWorld} />
+            {/* World is lazy — show a simple placeholder while it loads */}
+            <Suspense
+              fallback={
+                <div
+                  style={{
+                    height: "70vh",
+                    display: "grid",
+                    placeItems: "center",
+                    fontWeight: 600,
+                    opacity: 0.8,
+                  }}
+                >
+                  Loading world…
+                </div>
+              }
+            >
+              <World3D selected={selected} onBack={leaveWorld} />
+            </Suspense>
           </main>
         )}
       </div>
@@ -65,11 +95,7 @@ export default function App() {
       <ChatDock />
 
       {/* Expanding white portal mask */}
-      <div
-        className={`portal-overlay ${burst.on ? "on" : ""}`}
-        style={overlayStyle}
-        aria-hidden
-      />
+      <div className={`portal-overlay ${burst.on ? "on" : ""}`} style={overlayStyle} aria-hidden />
     </div>
   );
 }
