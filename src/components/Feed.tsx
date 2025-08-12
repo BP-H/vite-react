@@ -43,20 +43,26 @@ function makeBatch(offset: number, size = 12): Post[] {
 /** --- shared canvas context ------------------------------------------- */
 type MiniScene = {
   id: number;
-  ref: MutableRefObject<HTMLElement | null>;
+  ref: MutableRefObject<HTMLElement>; // NOTE: non-nullable, matches <View track> type
   element: ReactNode;
   visible: boolean;
 };
 
 const MiniSceneContext = createContext<{
-  register: (ref: MutableRefObject<HTMLElement | null>, element: ReactNode) => number;
+  register: (ref: MutableRefObject<HTMLElement>, element: ReactNode) => number;
   unregister: (id: number) => void;
   setVisible: (id: number, v: boolean) => void;
 } | null>(null);
 
 /** --- tiny 3D card ----------------------------------------------------- */
 function MiniPortal() {
-  const ref = useRef<HTMLDivElement | null>(null);
+  // domRef is what we put on the <div>, it can be null before mount
+  const domRef = useRef<HTMLDivElement | null>(null);
+
+  // trackRef is the one we give to <View track>, which wants MutableRefObject<HTMLElement>
+  // We initialize with `null!` and set it in the callback ref below — safe because we guard usage.
+  const trackRef = useRef<HTMLElement>(null!);
+
   const ctx = useContext(MiniSceneContext)!;
   const [id, setId] = useState<number | null>(null);
 
@@ -115,25 +121,29 @@ function MiniPortal() {
         />
       </>
     );
-    const newId = ctx.register(ref as MutableRefObject<HTMLElement | null>, element);
+    const newId = ctx.register(trackRef, element);
     setId(newId);
     return () => ctx.unregister(newId);
   }, [ctx]);
 
   // observe visibility to pause when off-screen
   useEffect(() => {
-    if (!ref.current || id === null) return;
+    if (!domRef.current || id === null) return;
     const io = new IntersectionObserver(
       ([e]) => ctx.setVisible(id, e.isIntersecting),
       { rootMargin: "200px 0px" }
     );
-    io.observe(ref.current);
+    io.observe(domRef.current);
     return () => io.disconnect();
   }, [ctx, id]);
 
   return (
     <div
-      ref={ref}
+      ref={(el) => {
+        domRef.current = el;
+        // keep trackRef in sync, guaranteeing a non-nullable HTMLElement for <View track>
+        if (el) trackRef.current = el;
+      }}
       style={{
         position: "relative",
         height: 220,
@@ -181,7 +191,7 @@ export default function Feed() {
   const idRef = useRef(0);
 
   const register = useCallback(
-    (ref: MutableRefObject<HTMLElement | null>, element: ReactNode) => {
+    (ref: MutableRefObject<HTMLElement>, element: ReactNode) => {
       const id = ++idRef.current;
       setScenes((s) => [...s, { id, ref, element, visible: false }]);
       return id;
@@ -207,8 +217,7 @@ export default function Feed() {
     if (!sentinelRef.current) return;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const io = new IntersectionObserver(
-      (entries) => {
-        const [e] = entries;
+      ([e]) => {
         if (!e.isIntersecting || loading || !hasMore) return;
         setLoading(true);
         timer = setTimeout(() => {
@@ -287,12 +296,9 @@ export default function Feed() {
           gl={{ antialias: false, powerPreference: "high-performance" }}
         >
           {scenes
-            .filter((s) => s.visible)
+            .filter((s) => s.visible && s.ref.current) // ensure mounted + visible
             .map((s) => (
-              <View
-                key={s.id}
-                track={s.ref as MutableRefObject<HTMLElement>}
-              >
+              <View key={s.id} track={s.ref}>
                 {s.element}
               </View>
             ))}
