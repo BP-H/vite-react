@@ -1,27 +1,31 @@
-import BackgroundVoid from "../three/BackgroundVoid";
-import type { ReactNode } from "react";
+// src/components/Shell.tsx
+import { PropsWithChildren } from 'react';
+import BackgroundVoid from '../three/BackgroundVoid';
+import AssistantOrb from './AssistantOrb';
+import PortalOverlay, { usePortal, useIsWorldRoute } from './PortalOverlay';
 
-type Props = { children: ReactNode };
+export default function Shell({ children }: PropsWithChildren) {
+  const portal = usePortal();
+  const inWorld = useIsWorldRoute();
 
-export default function Shell({ children }: Props) {
   return (
     <div className="shell">
-      <aside className="sidebar">
-        <div className="brand">Portal</div>
-        <nav>
-          <a className="nav-item" href="#">Home</a>
-          <a className="nav-item" href="#">Explore</a>
-          <a className="nav-item" href="#">Bookmarks</a>
-          <a className="nav-item" href="#">Profile</a>
-        </nav>
-      </aside>
+      {/* 3D lives behind everything */}
+      <BackgroundVoid />
 
-      <header className="header">
-        <div className="header-title">Feed</div>
-        <input className="search" placeholder="Search…" aria-label="Search" />
-      </header>
+      {/* Foreground glass layer */}
+      <main className="shell-glass">
+        {children}
+      </main>
 
-      <main className="main">{children}</main>
+      {/* Floating assistant (hide on world route) */}
+      <AssistantOrb
+        hidden={inWorld}
+        onOpen={(x, y) => portal.open(x, y, '/world')}
+      />
+
+      {/* Expanding circle transition */}
+      <PortalOverlay ref={portal.ref} />
     </div>
   );
 }
