@@ -4,25 +4,24 @@ import { Post } from "../../types";
 
 /**
  * Feed renders a centered, full-bleed column of posts with infinite load.
- * NOTE: PostCard now handles world entry internally via the bus; we do NOT
- * pass onPortal down anymore (that caused the TS error).
+ * NOTE: PostCard no longer takes onPortal; we keep an optional onPortal here
+ * only for compatibility with callers (unused).
  */
 export default function Feed({
-  onPortal: _onPortal, // kept for compatibility with callers (unused here)
+  onPortal: _onPortal, // intentionally unused
 }: {
-  onPortal: (p: Post, at?: { x: number; y: number }) => void;
+  onPortal?: (p: Post, at?: { x: number; y: number }) => void;
 }) {
   const [posts, setPosts] = useState<Post[]>(() => seed(12));
   const pageRef = useRef(1);
 
   useEffect(() => {
-    const sentinel = document.getElementById("feed-sentinel");
-    if (!sentinel) return;
+    const el = document.getElementById("feed-sentinel");
+    if (!el) return;
 
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
-          // load more
           pageRef.current += 1;
           setPosts((prev) => [...prev, ...seed(10, prev.length)]);
         }
@@ -30,7 +29,7 @@ export default function Feed({
       { rootMargin: "800px 0px" }
     );
 
-    io.observe(sentinel);
+    io.observe(el);
     return () => io.disconnect();
   }, []);
 
