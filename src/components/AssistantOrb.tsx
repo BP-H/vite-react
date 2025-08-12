@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import bus from "../lib/bus";
 import { Post } from "../types";
 
-/** Minimal typings so TS doesn’t complain on Vercel */
+/** minimal typings for Vercel build */
 declare global {
   interface Window {
     webkitSpeechRecognition?: any;
@@ -57,7 +57,7 @@ export default function AssistantOrb({
     });
   }, [onPortal]);
 
-  // Web Speech (best-effort)
+  // Web Speech API (best-effort)
   useEffect(() => {
     const Ctor: any = window.webkitSpeechRecognition || window.SpeechRecognition;
     if (!Ctor) return;
