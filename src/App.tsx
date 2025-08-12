@@ -4,6 +4,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { Stars, Html, Float, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 
+/* -------------------- demo content -------------------- */
 type Post = { id: string; title: string; author: string };
 const demo: Post[] = [
   { id: "1", title: "Prototype Moment", author: "@proto_ai" },
@@ -11,7 +12,47 @@ const demo: Post[] = [
   { id: "3", title: "Ocean Study", author: "@superNova_2177" },
 ];
 
-/* ---------- tiny 3D bits ---------- */
+/* -------------------- background void (shared) -------------------- */
+function BackgroundVoid() {
+  return (
+    <Canvas
+      dpr={[1, 2]}
+      camera={{ position: [0, 0, 6], fov: 60 }}
+      gl={{ antialias: true, powerPreference: "high-performance" }}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: "none",
+      }}
+    >
+      {/* deep, calm space */}
+      <color attach="background" args={["#0b0e14"]} />
+      <fog attach="fog" args={["#0b0e14", 40, 120]} />
+
+      {/* subtle star field */}
+      <Stars
+        radius={70}
+        depth={60}
+        count={4500}
+        factor={1.6}
+        saturation={0}
+        fade
+        speed={0.15}
+      />
+
+      {/* faint wireframe ring just to suggest depth */}
+      <Float speed={0.4} rotationIntensity={0.06} floatIntensity={0.06}>
+        <mesh position={[0, 0, -12]} rotation={[0.4, 0.3, 0]}>
+          <torusKnotGeometry args={[8, 0.35, 100, 16]} />
+          <meshBasicMaterial color="#111827" wireframe transparent opacity={0.18} />
+        </mesh>
+      </Float>
+    </Canvas>
+  );
+}
+
+/* -------------------- small 3D bits for the world -------------------- */
 function WobblyKnot() {
   const ref = useRef<THREE.Mesh | null>(null);
   useFrame((_, dt) => {
@@ -57,7 +98,7 @@ function RingPosts({ posts }: { posts: Post[] }) {
   );
 }
 
-/* ---------- 3D world screen ---------- */
+/* -------------------- 3D WORLD (after portal) -------------------- */
 function World3D({
   posts,
   selected,
@@ -74,7 +115,7 @@ function World3D({
         gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}
         camera={{ fov: 65, position: [0, 1.2, 8] }}
         shadows={false}
-        style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "auto" }}
+        style={{ position: "fixed", inset: 0, zIndex: 1, pointerEvents: "auto" }}
       >
         <color attach="background" args={["#07080d"]} />
         <fog attach="fog" args={["#07080d", 8, 22]} />
@@ -88,44 +129,10 @@ function World3D({
         </Suspense>
       </Canvas>
 
-      <div
-        style={{
-          position: "absolute",
-          top: 16,
-          left: 16,
-          display: "flex",
-          gap: 12,
-          zIndex: 1,
-        }}
-      >
-        <div
-          style={{
-            padding: "8px 12px",
-            borderRadius: 10,
-            border: "1px solid #2b3146",
-            background: "#12182a",
-            color: "#e9ecf1",
-          }}
-        >
-          {selected ? (
-            <>
-              Entering: <strong>{selected.title}</strong>
-            </>
-          ) : (
-            <>Portal</>
-          )}
-        </div>
-        <button
-          onClick={onExit}
-          style={{
-            padding: "8px 12px",
-            borderRadius: 10,
-            border: "1px solid #2b3146",
-            background: "#fff",
-            color: "#0e1220",
-            fontWeight: 700,
-          }}
-        >
+      {/* HUD */}
+      <div className="world-hud">
+        <div className="chip frost">Portal {selected ? `• ${selected.title}` : ""}</div>
+        <button className="btn-strong" onClick={onExit}>
           Back to Feed
         </button>
       </div>
@@ -133,7 +140,7 @@ function World3D({
   );
 }
 
-/* ---------- 2D feed screen ---------- */
+/* -------------------- 2D FEED over the void -------------------- */
 function Feed2D({
   posts,
   onOpenWorld,
@@ -142,136 +149,43 @@ function Feed2D({
   onOpenWorld: (p: Post) => void;
 }) {
   return (
-    <div
-      style={{
-        width: "100vw",
-        height: "100vh",
-        background: "#fff",
-        display: "grid",
-        gridTemplateColumns: "280px 1fr",
-      }}
-    >
-      {/* Sidebar */}
-      <aside
-        style={{
-          borderRight: "1px solid #e8ecf2",
-          padding: 16,
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-        }}
-      >
+    <div className="feed-shell">
+      {/* grid hint overlay */}
+      <div className="grid-overlay" aria-hidden />
+      {/* sidebar + rail */}
+      <aside className="sidebar frost">
         <strong style={{ fontSize: 18 }}>Sidebar</strong>
-        <button
-          style={{
-            padding: "10px 12px",
-            borderRadius: 10,
-            border: "1px solid #dde3ee",
-            background: "#f7f9fc",
-            fontWeight: 600,
-          }}
-          onClick={() => onOpenWorld(posts[0])}
-        >
+        <button className="btn" onClick={() => onOpenWorld(posts[0])}>
           Open Portal
         </button>
       </aside>
 
-      {/* Feed rail */}
-      <main
-        style={{
-          position: "relative",
-          overflow: "auto",
-          padding: "24px clamp(16px, 4vw, 40px)",
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.02))",
-        }}
-      >
-        {/* frosted grid hint */}
-        <div
-          aria-hidden
-          style={{
-            position: "absolute",
-            inset: 0,
-            background:
-              "linear-gradient(transparent 23px, rgba(0,0,0,0.06) 24px), linear-gradient(90deg, transparent 23px, rgba(0,0,0,0.06) 24px)",
-            backgroundSize: "24px 24px",
-            opacity: 0.06,
-            pointerEvents: "none",
-          }}
-        />
-
-        <div
-          style={{
-            maxWidth: 820,
-            margin: "0 auto",
-            display: "grid",
-            gap: 16,
-          }}
-        >
-          {posts.map((p) => (
-            <article
-              key={p.id}
-              style={{
-                borderRadius: 14,
-                border: "1px solid #e8ecf2",
-                background: "rgba(255,255,255,0.7)",
-                backdropFilter: "blur(8px)",
-                boxShadow: "0 10px 30px rgba(16,24,40,0.06)",
-                padding: 14,
-              }}
-            >
-              <header style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+      <main className="rail">
+        <div className="stack">
+          {posts.map((p, idx) => (
+            <article key={p.id} className={`card frost floating-${(idx % 3) + 1}`}>
+              <header className="row">
                 <strong>{p.author}</strong>
-                <span style={{ color: "#73839b" }}>• demo</span>
+                <span className="muted">• demo</span>
               </header>
-              <h3 style={{ margin: "8px 0 12px" }}>{p.title}</h3>
+
+              <h3 className="title">{p.title}</h3>
+
+              {/* this block is intentionally transparent+frosted so the void shows through */}
               <div
+                className="media frost hover-lift"
                 role="img"
                 aria-label={`${p.title} preview`}
-                onClick={() => onOpenWorld(p)}
                 title="Enter world"
-                style={{
-                  height: 180,
-                  borderRadius: 10,
-                  border: "1px solid #e8ecf2",
-                  background:
-                    "linear-gradient(135deg, #eef2ff, #eaf7ff 60%, #fff)",
-                  cursor: "pointer",
-                }}
+                onClick={() => onOpenWorld(p)}
               />
-              <footer style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                <button
-                  onClick={() => onOpenWorld(p)}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 10,
-                    border: "1px solid #d8e0ee",
-                    background: "#f7f9fc",
-                    fontWeight: 600,
-                  }}
-                >
+
+              <footer className="row gap">
+                <button className="btn" onClick={() => onOpenWorld(p)}>
                   Enter world
                 </button>
-                <button
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 10,
-                    border: "1px solid #d8e0ee",
-                    background: "#fff",
-                  }}
-                >
-                  Like
-                </button>
-                <button
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: 10,
-                    border: "1px solid #d8e0ee",
-                    background: "#fff",
-                  }}
-                >
-                  Share
-                </button>
+                <button className="chip">Like</button>
+                <button className="chip">Share</button>
               </footer>
             </article>
           ))}
@@ -281,20 +195,28 @@ function Feed2D({
   );
 }
 
-/* ---------- App ---------- */
+/* -------------------- App -------------------- */
 export default function App() {
   const [mode, setMode] = useState<"feed" | "world">("feed");
   const [selected, setSelected] = useState<Post | null>(null);
 
-  return mode === "feed" ? (
-    <Feed2D
-      posts={demo}
-      onOpenWorld={(p) => {
-        setSelected(p);
-        setMode("world");
-      }}
-    />
-  ) : (
-    <World3D posts={demo} selected={selected} onExit={() => setMode("feed")} />
+  return (
+    <>
+      {/* layer 0: ever-present void behind everything */}
+      <BackgroundVoid />
+
+      {/* layer 1: UI */}
+      {mode === "feed" ? (
+        <Feed2D
+          posts={demo}
+          onOpenWorld={(p) => {
+            setSelected(p);
+            setMode("world");
+          }}
+        />
+      ) : (
+        <World3D posts={demo} selected={selected} onExit={() => setMode("feed")} />
+      )}
+    </>
   );
 }
