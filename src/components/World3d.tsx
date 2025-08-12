@@ -1,96 +1,129 @@
-import { Suspense, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Stars, Html, Float, OrbitControls } from "@react-three/drei";
+import { Float, OrbitControls, Text } from "@react-three/drei";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import type { Post } from "../types";
-import { demoPosts } from "../types";
+import type { PostCard } from "./Feed2D";
 
-type Props = {
-  posts?: Post[];
-  selected?: Post | null;
-  onExit?: () => void;
-};
+export default function World3D({ post, onBack }: { post: PostCard; onBack: () => void }) {
+  const [revealed, setRevealed] = useState(false);
 
-function WobblyKnot() {
-  const ref = useRef<THREE.Mesh>(null);
-  useFrame((_, dt) => {
-    if (!ref.current) return;
-    ref.current.rotation.x += dt * 0.15;
-    ref.current.rotation.y += dt * 0.25;
-  });
+  useEffect(() => {
+    // initial state: bright white → quickly fade to the world
+    const t = setTimeout(() => setRevealed(true), 350);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
-    <mesh ref={ref} position={[0, 1.5, -2]}>
-      <torusKnotGeometry args={[0.8, 0.25, 128, 32]} />
-      <meshLambertMaterial color="#8a7cff" flatShading />
-    </mesh>
+    <div className="world-wrap">
+      <div className="world-topbar">
+        <button className="pill" onClick={onBack}>Back to Feed</button>
+        <div className="crumb">Portal • {post.title}</div>
+      </div>
+
+      <Canvas camera={{ position: [0, 2.2, 6], fov: 45 }} dpr={[1, 2]}>
+        {/* BRIGHT WHITE VOID that then reveals the world */}
+        <color attach="background" args={[revealed ? post.world === "void" ? "#ffffff" : "#0b0c0f" : "#ffffff"]} />
+        {post.world === "void" ? <fog attach="fog" args={["#ffffff", 4, 14]} /> : null}
+
+        <ambientLight intensity={post.world === "void" ? 1.1 : 0.4} />
+        <directionalLight position={[3, 5, 7]} intensity={post.world === "void" ? 0.4 : 0.9} />
+
+        {/* Scene selection */}
+        {post.world === "void" && <VoidUniverse tint={post.palette[2]} />}
+        {post.world === "knots" && <KnotRealm color={post.palette[2]} />}
+        {post.world === "ocean" && <OceanRealm color={post.palette[2]} />}
+
+        <OrbitControls enableDamping />
+      </Canvas>
+    </div>
   );
 }
 
-function RingPosts({ posts }: { posts: Post[] }) {
-  const R = 8;
+function VoidUniverse({ tint = "#6a73ff" }) {
+  // A minimal bright infinity with floating “post cards”
+  const cards = useMemo(() => {
+    const arr: { p: THREE.Vector3; r: number }[] = [];
+    for (let i = 0; i < 16; i++) {
+      arr.push({
+        p: new THREE.Vector3(
+          (Math.random() - 0.5) * 8,
+          (Math.random() - 0.3) * 4,
+          (Math.random() - 0.5) * 8
+        ),
+        r: Math.random() * 0.8 + 0.2,
+      });
+    }
+    return arr;
+  }, []);
   return (
     <group>
-      {posts.map((p, i) => {
-        const a = (i / posts.length) * Math.PI * 2;
-        const pos: [number, number, number] = [
-          Math.cos(a) * R,
-          Math.sin(i) * 0.2,
-          Math.sin(a) * R,
-        ];
-        return (
-          <Float key={p.id} speed={1.5} rotationIntensity={0.1} floatIntensity={0.6}>
-            <mesh position={pos}>
-              <planeGeometry args={[2.8, 1.6, 1, 1]} />
-              <meshLambertMaterial color="#22263b" wireframe flatShading />
-              <Html center transform distanceFactor={2.4}>
-                <div className="panel">
-                  <div style={{ fontWeight: 700 }}>{p.title}</div>
-                  <div style={{ opacity: 0.7 }}>{p.author}</div>
-                </div>
-              </Html>
-            </mesh>
-          </Float>
-        );
-      })}
+      <Text position={[0, 2.6, 0]} fontSize={0.5} color="#222" anchorX="center" anchorY="middle">
+        white void
+      </Text>
+      {cards.map((c, i) => (
+        <Float key={i} speed={0.8 + (i % 3) * 0.2} rotationIntensity={0.2} floatIntensity={0.6}>
+          <mesh position={c.p}>
+            <planeGeometry args={[1.6 + c.r, 0.9 + c.r * 0.4, 1, 1]} />
+            <meshPhysicalMaterial color={tint} roughness={0.95} transparent opacity={0.18} />
+          </mesh>
+        </Float>
+      ))}
     </group>
   );
 }
 
-export default function World3D({ posts, selected, onExit }: Props) {
-  const data = posts ?? demoPosts;
-
+function KnotRealm({ color = "#6a73ff" }) {
+  const g = useRef<THREE.Group>(null!);
+  useFrame((_, dt) => {
+    g.current.rotation.y += dt * 0.3;
+  });
   return (
-    <div className="world3d">
-      <Canvas
-        dpr={[1, 1.5]}
-        gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}
-        camera={{ fov: 65, position: [0, 1.2, 8] }}
-        shadows={false}
-        style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "auto" }}
-      >
-        <color attach="background" args={["#07080d"]} />
-        <fog attach="fog" args={["#07080d", 8, 22]} />
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[4, 6, 3]} intensity={0.6} />
+    <group ref={g}>
+      <Float speed={1} rotationIntensity={0.7} floatIntensity={0.6}>
+        <mesh>
+          <torusKnotGeometry args={[1.6, 0.36, 200, 32]} />
+          <meshStandardMaterial color={color} roughness={0.4} metalness={0.3} />
+        </mesh>
+      </Float>
+      {[...Array(6)].map((_, i) => (
+        <Float key={i} speed={0.6 + i * 0.1} rotationIntensity={0.3}>
+          <mesh position={[Math.sin(i) * 3, Math.cos(i * 1.3) * 1.2, Math.cos(i) * 3]}>
+            <icosahedronGeometry args={[0.25 + (i % 3) * 0.12]} />
+            <meshStandardMaterial color={color} roughness={0.7} metalness={0.15} />
+          </mesh>
+        </Float>
+      ))}
+    </group>
+  );
+}
 
-        <Suspense fallback={null}>
-          <Stars radius={60} depth={80} count={6000} factor={2} fade speed={1} />
-          <WobblyKnot />
-          <RingPosts posts={data} />
-          <OrbitControls enablePan={false} />
-        </Suspense>
-      </Canvas>
-
-      <div className="world3d-ui">
-        {selected ? (
-          <div className="world3d-tag">
-            Entering: <strong>{selected.title}</strong>
-          </div>
-        ) : (
-          <div className="world3d-tag">Portal</div>
-        )}
-        <button className="btn-exit" onClick={() => onExit?.()}>Back to Feed</button>
-      </div>
-    </div>
+function OceanRealm({ color = "#7bb3ff" }) {
+  const ref = useRef<THREE.Mesh>(null!);
+  const t = useRef(0);
+  useFrame((_, dt) => {
+    t.current += dt;
+    const geo = ref.current.geometry as THREE.PlaneGeometry;
+    const pos = geo.attributes.position as THREE.BufferAttribute;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      pos.setZ(i, Math.sin(x * 1.7 + t.current * 1.1) * 0.35 + Math.cos(y * 1.9 + t.current * 0.8) * 0.22);
+    }
+    pos.needsUpdate = true;
+    (geo as any).computeVertexNormals?.();
+  });
+  return (
+    <group>
+      <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.6, 0]}>
+        <planeGeometry args={[40, 40, 180, 180]} />
+        <meshStandardMaterial color={color} roughness={0.85} metalness={0.05} />
+      </mesh>
+      <Float speed={1} rotationIntensity={0.2} floatIntensity={0.6}>
+        <mesh position={[0, 0.6, 0]}>
+          <sphereGeometry args={[0.35, 48, 48]} />
+          <meshStandardMaterial color={color} roughness={0.2} metalness={0.5} />
+        </mesh>
+      </Float>
+    </group>
   );
 }
