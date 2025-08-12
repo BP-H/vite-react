@@ -1,0 +1,10 @@
+:root{
+  --bg-0:#F5F7FA;
+  --text-0:#0B0F14;
+  --muted:#8A93A1;
+  --glass:rgba(255,255,255,0.5);
+  --stroke:rgba(0,0,0,0.08);
+  --accent:#7AA7FF; /* keep subtle */
+  --radius-1:14px; --radius-2:22px; --radius-3:28px;
+  color-scheme: light;
+}
