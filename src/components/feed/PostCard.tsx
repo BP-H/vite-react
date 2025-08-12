@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import bus from "../../lib/bus";
 import { Post } from "../../types";
 
-/** inline avatar placeholder */
+/** inline avatar placeholder (used when no avatar is available) */
 const AVATAR_SVG =
   "data:image/svg+xml;utf8," +
   encodeURIComponent(`
@@ -10,14 +10,15 @@ const AVATAR_SVG =
   <defs>
     <radialGradient id='g' cx='35%' cy='30%' r='80%'>
       <stop offset='0%' stop-color='#ffffff'/>
-      <stop offset='55%' stop-color='#c7d2fe'/>
-      <stop offset='100%' stop-color='#6366f1'/>
+      <stop offset='55%' stop-color='#ffd6f4'/>
+      <stop offset='100%' stop-color='#ff74de'/>
     </radialGradient>
   </defs>
   <rect width='96' height='96' rx='24' fill='#0f1117'/>
   <circle cx='48' cy='48' r='28' fill='url(#g)'/>
 </svg>`);
 
+/** minimal icons (kept inline to avoid deps) */
 const ICON = {
   heart: (
     <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
@@ -64,7 +65,7 @@ export default function PostCard({ post }: { post: Post }) {
   const elRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState<Drawer>(null);
 
-  const avatar = useMemo(() => (post.image?.startsWith("data:avatar:") ? post.image : AVATAR_SVG), [post.image]);
+  const avatar = useMemo(() => AVATAR_SVG, []);
   const title = post.title || "Prototype moment.";
   const handle = post.author || "@proto_ai";
 
@@ -112,20 +113,16 @@ export default function PostCard({ post }: { post: Post }) {
           <img className="post-bot__avatar" src={avatar} alt="" />
         </button>
         <button className={`icon-btn ${open === "engage" ? "on" : ""}`} onClick={() => toggle("engage")} title="Engage">
-          {ICON.heart}
-          <span>Engage</span>
+          {ICON.heart}<span>Engage</span>
         </button>
         <button className={`icon-btn ${open === "comment" ? "on" : ""}`} onClick={() => toggle("comment")} title="Comment">
-          {ICON.comment}
-          <span>Comment</span>
+          {ICON.comment}<span>Comment</span>
         </button>
         <button className={`icon-btn ${open === "share" ? "on" : ""}`} onClick={() => toggle("share")} title="Share">
-          {ICON.share}
-          <span>Share</span>
+          {ICON.share}<span>Share</span>
         </button>
         <button className="icon-btn enter" onClick={enterWorld} title="Enter world">
-          {ICON.spiral}
-          <span>Enter</span>
+          {ICON.spiral}<span>Enter</span>
         </button>
       </div>
 
@@ -160,8 +157,10 @@ function ProfileDrawer() {
   );
 }
 
-/* The newline before .split caused the build error — keep it on one line */
-const EMOJIS = "🤗😍🔥✨👍💜💙💚👏🙌🤩🥳🎉😁😎🤍🖤🤝💡🧠🫶🤔😮😭🥰😇😴😅🤤🫡🤯😱😌😤😏😆😄😊😉😃🙂🤓🤖👾🦄🌈⭐️⚡️🌟🌸🌺🌼🍀🍃🍁🍂🍇🍉🍒🍩🍪🍫🍿🍭☕️🍵🍔🍕🍟🌮🌯🍣🍙🍜🍝🥗🥐🥞🥓🥩🍗🍳🥚🧇🍰🧁🍨🍦🍷🍸🍹🍺🥂🎨🎧🎮🎲🎯🎬🎼🎹🎻🥁🏆🏀⚽️🏈🎾🏐🏓🥊⛳️🛼🛹🚲🛴🚀✈️🛰️🌍🌌🪐🌙☀️🌤️🌧️❄️".split("");
+/** Keep this as two simple lines so TS never chokes on a leading '.' */
+const EMOJI_STR =
+  "🤗😍🔥✨👍💜💙💚👏🙌🤩🥳🎉😁😎🤍🖤🤝💡🧠🫶🤔😮😭🥰😇😴😅🤤🫡🤯😱😌😤😏😆😄😊😉😃🙂🤓🤖👾🦄🌈⭐️⚡️🌟🌸🌺🌼🍀🍃🍁🍂🍇🍉🍒🍩🍪🍫🍿🍭☕️🍵🍔🍕🍟🌮🌯🍣🍙🍜🍝🥗🥐🥞🥓🥩🍗🍳🥚🧇🍰🧁🍨🍦🍷🍸🍹🍺🥂🎨🎧🎮🎲🎯🎬🎼🎹🎻🥁🏆🏀⚽️🏈🎾🏐🏓🥊⛳️🛼🛹🚲🛴🚀✈️🛰️🌍🌌🪐🌙☀️🌤️🌧️❄️";
+const EMOJIS = Array.from(EMOJI_STR);
 
 function EngageDrawer() {
   return (
