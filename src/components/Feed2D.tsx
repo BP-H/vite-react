@@ -1,7 +1,12 @@
 // src/components/Feed2D.tsx
-import { memo, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, memo, MouseEvent } from "react";
 
-export type Post = { id: number; title: string; author: string; image: string };
+export type Post = {
+  id: number;
+  author: string;
+  title: string;
+  image: string;
+};
 
 const makePost = (id: number): Post => ({
   id,
@@ -15,43 +20,31 @@ type Props = {
 };
 
 function Card({ p, onEnterWorld }: { p: Post; onEnterWorld: Props["onEnterWorld"] }) {
+  const onClick = (e: MouseEvent<HTMLButtonElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    onEnterWorld(p, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+  };
   return (
     <article className="card frosted">
-      <div className="card-head">
+      <header className="card-head">
         <div className="byline">
           <span className="handle">{p.author}</span>
           <span className="dot">•</span>
           <span>demo</span>
         </div>
-        <h3>{p.title}</h3>
-      </div>
+        <h2>{p.title}</h2>
+      </header>
 
-      <div className="media-wrap">
-        <img loading="lazy" src={p.image} alt={p.title} />
+      <div className="card-canvas">
+        <img className="mini-canvas" loading="lazy" src={p.image} alt={p.title} />
       </div>
 
       <div className="card-actions">
-        <button
-          className="pill"
-          onClick={(e) => onEnterWorld(p, { x: e.clientX, y: e.clientY })}
-        >
-          Enter world
-        </button>
+        <button className="pill" onClick={onClick}>Enter world</button>
         <button className="pill ghost">Like</button>
         <button className="pill ghost">Share</button>
       </div>
     </article>
-  );
-}
-
-function Skeleton() {
-  return (
-    <div className="card skeleton">
-      <div className="s-line w40" />
-      <div className="s-line w70" />
-      <div className="s-img" />
-      <div className="s-actions" />
-    </div>
   );
 }
 
@@ -68,14 +61,13 @@ function Feed2D({ onEnterWorld }: Props) {
     if (!el) return;
     const io = new IntersectionObserver(
       async (entries) => {
-        const seen = entries.some((e) => e.isIntersecting);
-        if (seen && !loading && hasMore) {
+        if (entries.some((e) => e.isIntersecting) && !loading && hasMore) {
           setLoading(true);
-          await new Promise((r) => setTimeout(r, 500)); // fake latency
-          const base = posts.length;
-          const next = Array.from({ length: 6 }, (_, i) => makePost(base + i));
+          await new Promise((r) => setTimeout(r, 500));
+          const start = posts.length;
+          const next = Array.from({ length: 6 }, (_, i) => makePost(start + i));
           setPosts((p) => [...p, ...next]);
-          setHasMore(base + next.length < 120);
+          setHasMore(start + next.length < 120);
           setLoading(false);
         }
       },
@@ -96,10 +88,22 @@ function Feed2D({ onEnterWorld }: Props) {
         {posts.map((p) => (
           <Card key={p.id} p={p} onEnterWorld={onEnterWorld} />
         ))}
-        <div ref={sentinelRef} />
-        {loading && <Skeleton />}
-        {!hasMore && <div className="end">— end —</div>}
       </div>
+
+      <div ref={sentinelRef} />
+      {loading && <Skeleton />}
+      {!hasMore && <div className="end">— end —</div>}
+    </div>
+  );
+}
+
+function Skeleton() {
+  return (
+    <div className="card frosted skeleton">
+      <div className="s-line w40" />
+      <div className="s-line w70" />
+      <div className="s-img" />
+      <div className="s-actions" />
     </div>
   );
 }
