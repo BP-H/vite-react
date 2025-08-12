@@ -1,42 +1,57 @@
-// src/three/BackgroundVoid.tsx
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, OrbitControls, Stars } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { Float, Instances, Instance } from "@react-three/drei";
 import * as THREE from "three";
-import { useRef } from "react";
+import { useMemo } from "react";
 
-function Knot() {
-  const ref = useRef<THREE.Mesh>(null!);
-  useFrame((_, dt) => {
-    if (!ref.current) return;
-    ref.current.rotation.x += dt * 0.2;
-    ref.current.rotation.y += dt * 0.3;
-  });
+function Grid() {
+  const geo = useMemo(() => new THREE.PlaneGeometry(200, 200, 80, 80), []);
   return (
-    <Float speed={1.2} rotationIntensity={0.4} floatIntensity={1.2}>
-      <mesh ref={ref} position={[0, 0, -0.6]}>
-        <torusKnotGeometry args={[1.2, 0.35, 220, 32]} />
-        <meshStandardMaterial
-          color={"#6a73ff"}
-          roughness={0.2}
-          metalness={0.4}
-          emissive={"#1d1f3d"}
-          emissiveIntensity={0.25}
-        />
-      </mesh>
-    </Float>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.2, -6]} geometry={geo}>
+      <meshBasicMaterial color="#e6ebf4" wireframe transparent opacity={0.22} />
+    </mesh>
+  );
+}
+
+function PeopleOrbs() {
+  const count = 12;
+  const positions = useMemo(
+    () =>
+      Array.from({ length: count }, (_, i) => {
+        const a = (i / count) * Math.PI * 2;
+        const r = 6.5;
+        return [Math.cos(a) * r, Math.sin(a) * 0.8, -8 - (i % 3) * 0.4] as [number, number, number];
+      }),
+    []
+  );
+  return (
+    <Instances limit={count}>
+      <sphereGeometry args={[0.22, 32, 32]} />
+      <meshStandardMaterial
+        color="#7b83ff"
+        emissive="#9aa2ff"
+        emissiveIntensity={0.18}
+        roughness={0.25}
+        metalness={0.55}
+      />
+      {positions.map((p, i) => (
+        <Float key={i} floatIntensity={0.7} rotationIntensity={0.3} speed={1 + (i % 3) * 0.2}>
+          <Instance position={p} />
+        </Float>
+      ))}
+    </Instances>
   );
 }
 
 export default function BackgroundVoid() {
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
-      <Canvas camera={{ position: [0, 0, 4], fov: 60 }}>
-        <color attach="background" args={["#06080f"]} />
-        <hemisphereLight intensity={0.35} />
-        <pointLight position={[5, 5, 5]} intensity={1} />
-        <Stars radius={60} depth={40} factor={2} fade />
-        <Knot />
-        <OrbitControls enableZoom={false} enablePan={false} enableRotate={false} />
+    <div style={{ position: "fixed", inset: 0, zIndex: 0 }}>
+      <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 6], fov: 50 }}>
+        <color attach="background" args={["#f5f7fb"]} />
+        <fog attach="fog" args={["#eef1f7", 10, 40]} />
+        <ambientLight intensity={1.0} />
+        <directionalLight position={[5, 8, 3]} intensity={0.6} />
+        <Grid />
+        <PeopleOrbs />
       </Canvas>
     </div>
   );
