@@ -1,11 +1,12 @@
 // src/components/World3D.tsx
+import { useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Float, Stars, OrbitControls, Html } from "@react-three/drei";
 import * as THREE from "three";
-import { Post } from "./Feed2D";
+import type { Post } from "./Feed2D";
 
 function Knot() {
-  const ref = (global as any)._snref ??= { current: null as THREE.Mesh | null };
+  const ref = useRef<THREE.Mesh | null>(null);
   useFrame((_, dt) => {
     if (!ref.current) return;
     ref.current.rotation.x += dt * 0.25;
@@ -41,18 +42,23 @@ export default function World3D({
         <color attach="background" args={["#07080d"]} />
         <ambientLight intensity={0.6} />
         <directionalLight position={[4, 6, 3]} intensity={0.6} />
+
         <Stars radius={60} depth={80} count={6000} factor={2} fade speed={1} />
         <Float speed={1} rotationIntensity={0.2} floatIntensity={0.6}>
           <Knot />
         </Float>
 
-        {/* label on the knot */}
         {selected && (
           <Html center>
-            <div style={{
-              background:"rgba(0,0,0,.6)", color:"#fff", padding:"6px 10px",
-              borderRadius:12, border:"1px solid rgba(255,255,255,.15)"
-            }}>
+            <div
+              style={{
+                background: "rgba(0,0,0,.6)",
+                color: "#fff",
+                padding: "6px 10px",
+                borderRadius: 12,
+                border: "1px solid rgba(255,255,255,.15)",
+              }}
+            >
               {selected.title} — {selected.author}
             </div>
           </Html>
