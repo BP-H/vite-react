@@ -1,43 +1,41 @@
-// src/components/ChatDock.tsx
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import bus from "../lib/bus";
+type Row = { who: "you" | "ai"; text: string; partial?: boolean };
 
-type Msg = { role: "user" | "assistant" | "system"; text: string };
-
-export default function ChatDock() {
-  const [open, setOpen] = useState(true);
-  const [msgs, setMsgs] = useState<Msg[]>([]);
-  const wrapRef = useRef<HTMLDivElement | null>(null);
-
+export default function ChatDock(){
+  const [rows, setRows] = useState<Row[]>([]);
   useEffect(() => {
-    const off = bus.on("chat:add", (m: Msg) => {
-      setMsgs((prev) => [...prev.slice(-9), m]); // keep last 10
-      queueMicrotask(() => {
-        const el = wrapRef.current;
-        if (el) el.scrollTop = el.scrollHeight;
-      });
+    const add = (r: Row) => setRows(prev => {
+      // collapse partials
+      if (r.partial) {
+        const next = prev.slice();
+        if (next.length && next[next.length-1].who === "you" && next[next.length-1].partial) {
+          next[next.length-1] = r;
+          return next;
+        }
+      }
+      return [...prev, r].slice(-8);
     });
-    return off;
+    bus.on("chat:add", add);
+    return () => { bus.off("chat:add", add); };
   }, []);
-
-  if (!open) {
-    return (
-      <button className="chatdock-pill" onClick={() => setOpen(true)} aria-label="Open chat">
-        Chat
-      </button>
-    );
-  }
   return (
-    <div className="chatdock">
-      <div className="chatdock__head">
-        <div className="title">Assistant</div>
-        <button className="x" onClick={() => setOpen(false)} aria-label="Close">×</button>
-      </div>
-      <div className="chatdock__body" ref={wrapRef}>
-        {msgs.map((m, i) => (
-          <div key={i} className={`bubble ${m.role}`}>{m.text}</div>
-        ))}
-      </div>
+    <div style={{
+      position:"fixed", left:16, right:16, bottom:90, zIndex:60,
+      display:"flex", gap:8, flexDirection:"column", pointerEvents:"none"
+    }}>
+      {rows.map((r,i)=>(
+        <div key={i} style={{
+          alignSelf: r.who==="you"?"flex-start":"flex-end",
+          maxWidth: "70%", padding:"8px 10px", borderRadius:12,
+          background: r.who==="you" ? "rgba(255,255,255,.08)" : "rgba(255,31,185,.18)",
+          color:"#fff", backdropFilter:"blur(10px) saturate(140%)",
+          border: "1px solid rgba(255,255,255,.12)"
+        }}>
+          {r.text}
+          {r.partial && <span style={{opacity:.6}}> …</span>}
+        </div>
+      ))}
     </div>
   );
 }
