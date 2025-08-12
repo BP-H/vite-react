@@ -1,27 +1,31 @@
+// src/components/Shell.tsx
 import Sidebar from "./Sidebar";
-import Feed2D from "./Feed2D";
 import AssistantOrb from "./AssistantOrb";
+import Feed2D from "./Feed2D";
 import { Post } from "../types";
+import bus from "../lib/bus";
+import { useEffect } from "react";
 
-type Props = {
-  onPortal: (post: Post, at: { x: number; y: number }) => void;
-  hideOrb?: boolean;
-};
-
-export default function Shell({ onPortal, hideOrb = false }: Props) {
-  const openFromSidebar = () =>
-    onPortal(
-      { id: -1, author: "@proto_ai", title: "Prototype Moment", image: "" },
-      { x: window.innerWidth - 56, y: window.innerHeight - 56 }
-    );
+export default function Shell({ onPortal, hideOrb = false }: { onPortal: (p: Post, at?: {x:number;y:number}) => void; hideOrb?: boolean }) {
+  // simple nav bus (optional): route labels to your feed for now
+  useEffect(() => {
+    return bus.on("nav:goto", ({ label }: { label: string }) => {
+      // You can wire real routing later; for now we just log/ignore.
+      console.info("nav:goto", label);
+    });
+  }, []);
 
   return (
-    <div className="app-root">
-      <Sidebar onOpen={openFromSidebar} />
-      <main className="content">
-        <Feed2D onEnterWorld={onPortal} />
-      </main>
-      <AssistantOrb hidden={hideOrb} onPortal={onPortal} />
+    <div className="layout">
+      <Sidebar />
+      <div className="content-col">
+        <Feed2D posts={[]} onOpenWorld={(p?: Post) => {
+          const at = { x: window.innerWidth - 56, y: window.innerHeight - 56 };
+          onPortal?.(p as Post, at);
+        }}/>
+      </div>
+
+      {!hideOrb && <AssistantOrb onPortal={(post, at) => onPortal(post, at)} />}
     </div>
   );
 }
