@@ -49,7 +49,7 @@ export default function AssistantOrb({
     });
   }, [onPortal]);
 
-  // ---- voice: continuous listen + talk back (half-duplex) ------------------
+  // ---- voice: half-duplex listen/speak ------------------------------------
   const recRef = useRef<SpeechRecognitionLike | null>(null);
   const listeningRef = useRef(false);
   const speakingRef = useRef(false);
@@ -60,10 +60,8 @@ export default function AssistantOrb({
   const [micOn, setMicOn] = useState(false);
   const [toast, setToast] = useState("");
 
-  // track hovered card so “enter world” knows where to fly
   useEffect(() => bus.on("feed:hover", (p) => (lastHoverRef.current = p)), []);
 
-  // Unlock TTS (voices) + satisfy autoplay after first user click
   async function unlockAudioAndVoices() {
     if (firstGestureRef.current) return;
     firstGestureRef.current = true;
@@ -85,7 +83,6 @@ export default function AssistantOrb({
     } catch {}
   }
 
-  // Ask mic once; HTTPS required off localhost
   async function ensureMic(): Promise<boolean> {
     if (!location.hostname.includes("localhost") && location.protocol !== "https:") {
       setToast("Mic needs HTTPS (use Vercel prod or localhost).");
@@ -106,7 +103,6 @@ export default function AssistantOrb({
     }
   }
 
-  // speak helper — pause recognition during TTS to avoid feedback
   function speak(text: string): Promise<void> {
     return new Promise((resolve) => {
       try {
@@ -115,21 +111,19 @@ export default function AssistantOrb({
         if (!synth || !Utter) return resolve();
 
         synth.cancel();
-        const u = new Utter(text);
+        const u = new Utter(text || "Okay.");
         const v = synth.getVoices?.().find((vv: any) => vv?.lang?.startsWith?.("en"));
         if (v) u.voice = v;
         u.rate = 1; u.pitch = 1; u.lang = "en-US";
 
         u.onstart = () => {
           speakingRef.current = true;
-          // prevent auto-restart while we’re speaking
           restartOnEndRef.current = false;
           try { recRef.current?.stop(); } catch {}
         };
 
         u.onend = () => {
           speakingRef.current = false;
-          // now safe to listen again
           if (micOn) {
             restartOnEndRef.current = true;
             setTimeout(() => { try { recRef.current?.start(); } catch {} }, 200);
@@ -142,6 +136,22 @@ export default function AssistantOrb({
         resolve();
       }
     });
+  }
+
+  async function askAssistant(q: string): Promise<string> {
+    try {
+      const r = await fetch("/api/assistant-reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ q }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!j?.ok) throw new Error(j?.error || "assistant error");
+      return (j.text || "").trim();
+    } catch (e) {
+      console.error(e);
+      return "";
+    }
   }
 
   // recognizer lifecycle (single instance)
@@ -172,7 +182,6 @@ export default function AssistantOrb({
     rec.onend = () => {
       listeningRef.current = false;
       setToast(micOn ? "…" : "");
-      // only restart if we want to and we're not currently speaking
       if (restartOnEndRef.current && !speakingRef.current) {
         setTimeout(() => { try { rec.start(); } catch {} }, 250);
       }
@@ -195,24 +204,37 @@ export default function AssistantOrb({
 
       bus.emit("chat:add", { role: "user", text: final });
 
-      // tiny command router
+      // local commands first
       const t = final.toLowerCase();
       if ((/enter|open/.test(t)) && /(world|portal|void)/.test(t)) {
         const target = lastHoverRef.current ?? { post: DEFAULT_POST, x: window.innerWidth - 56, y: window.innerHeight - 56 };
         bus.emit("orb:portal", target);
-        await speak("Entering world.");
-        setToast(""); return;
+        await speak("Entering world."); setToast(""); return;
       }
       if ((/leave|exit|back/.test(t)) && /(world|portal|feed|void)/.test(t)) {
-        bus.emit("ui:leave", {});
-        await speak("Back to feed.");
-        setToast(""); return;
+        bus.emit("ui:leave", {}); await speak("Back to feed."); setToast(""); return;
+      }
+      if (/make (it )?dark(er)?|dark mode/.test(t)) {
+        bus.emit("world:update", { theme: "dark" }); await speak("Dark mode."); setToast(""); return;
+      }
+      if (/light(er)? mode|bright(er)?/.test(t)) {
+        bus.emit("world:update", { theme: "light" }); await speak("Light mode."); setToast(""); return;
+      }
+      if (/(more|add) orbs?/.test(t)) {
+        bus.emit("world:update", { orbCount: 20 }); await speak("More orbs."); setToast(""); return;
+      }
+      const m = t.match(/(orb|color).*(teal|cyan|blue|green|orange|red|white|black)/);
+      if (m) {
+        const named: Record<string,string> = { teal:"#14b8a6", cyan:"#06b6d4", blue:"#3b82f6", green:"#22c55e", orange:"#f97316", red:"#ef4444", white:"#ffffff", black:"#111827" };
+        bus.emit("world:update", { orbColor: named[m[2]] || "#67e8f9" });
+        await speak(`Orbs ${m[2]}.`); setToast(""); return;
       }
 
-      // fallback reply — swap with your /api call when ready
-      const reply = "Got it.";
-      bus.emit("chat:add", { role: "assistant", text: reply });
-      await speak(reply);
+      // real assistant reply
+      const reply = await askAssistant(final);
+      const say = reply || "Okay.";
+      bus.emit("chat:add", { role: "assistant", text: say });
+      await speak(say);
       setToast("");
     };
 
