@@ -1,43 +1,102 @@
 // src/components/Shell.tsx
-import { useEffect } from "react";
+import { useMemo } from "react";
 import Sidebar from "./Sidebar";
 import AssistantOrb from "./AssistantOrb";
-import Feed2D from "./Feed2D";
-import { Post } from "../types";
 import bus from "../lib/bus";
+import { Post } from "../types";
 
-type XY = { x: number; y: number };
-
-// NOTE: App passes `enterWorld(p, at?)`, so keep `at` optional here.
-export default function Shell({
-  onPortal,
-  hideOrb = false,
-}: {
-  onPortal: (p: Post, at?: XY) => void;
+type Props = {
+  onPortal: (p: Post, at: { x: number; y: number }) => void;
   hideOrb?: boolean;
-}) {
-  // optional: react to sidebar nav events
-  useEffect(() => {
-    return bus.on("nav:goto", ({ label }: { label: string }) => {
-      console.info("nav:goto", label);
-    });
-  }, []);
+};
 
-  // Bridge to Feed2D's expected signature: (p, at: XY) => void
-  const handleEnterWorld = (p: Post, at: XY) => onPortal(p, at);
+// simple demo posts; replace with your real data source if you like
+const demoPosts: Post[] = [
+  { id: 1, author: "taha_gungor", title: "Prototype moment. Enter the void.", image: "/cover1.jpg" },
+  { id: 2, author: "superNova_2177", title: "Frosted glass + 3D worlds → engagement ↑", image: "/cover2.jpg" },
+  { id: 3, author: "test_tech", title: "Tap the orb or say “enter world”.", image: "/cover3.jpg" },
+];
+
+export default function Shell({ onPortal, hideOrb = false }: Props) {
+  // you can swap this to props or a fetch; memo keeps renders light
+  const posts = useMemo(() => demoPosts, []);
+
+  function emitHover(p: Post, el: HTMLElement) {
+    const r = el.getBoundingClientRect();
+    // center (x,y) for the orb flight target
+    const x = r.left + r.width / 2;
+    const y = r.top + Math.min(56, r.height * 0.25);
+    bus.emit("feed:hover", { post: p, x, y });
+  }
+
+  function clearHover() {
+    // optional: you can emit a null hover if you want the orb to ignore
+    // bus.emit("feed:hover", null);
+  }
+
+  function portalFrom(el: HTMLElement, p: Post) {
+    const r = el.getBoundingClientRect();
+    onPortal(p, { x: r.left + r.width / 2, y: r.top + 24 });
+  }
 
   return (
-    <div className="layout">
+    <>
+      {/* Tiny avatar dock (fixed) + sliding panel */}
       <Sidebar />
-      <div className="content-col">
-        {/* Feed2D expects onEnterWorld only (no posts prop) */}
-        <Feed2D onEnterWorld={handleEnterWorld} />
+
+      {/* Centered, full-width feed (Instagram/LinkedIn style) */}
+      <div className="feed-frame">
+        <div className="feed-col">
+          {posts.map((p) => (
+            <article
+              key={p.id}
+              className="post-card"
+              onMouseEnter={(e) => emitHover(p, e.currentTarget)}
+              onMouseMove={(e) => emitHover(p, e.currentTarget)}
+              onMouseLeave={clearHover}
+            >
+              <header className="post-head">
+                <div className="avatar">
+                  <img
+                    src="/avatar.jpg"
+                    alt=""
+                    onError={(e) => {
+                      // hide if missing; Sidebar provides a nice pink placeholder already
+                      (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
+                    }}
+                  />
+                </div>
+                <div className="meta">
+                  <div className="name">{p.author}</div>
+                  <div className="sub">superNova_2177 • now</div>
+                </div>
+              </header>
+
+              {p.image ? (
+                <div className="post-media">
+                  <img src={p.image} alt="" />
+                </div>
+              ) : null}
+
+              <div className="post-body">{p.title}</div>
+
+              <div className="post-engage">
+                <button className="pill">❤️ 1.2k</button>
+                <button className="pill">💬 342</button>
+                <button
+                  className="pill"
+                  onClick={(e) => portalFrom(e.currentTarget.closest(".post-card") as HTMLElement, p)}
+                >
+                  🌀 Enter world
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
 
-      {!hideOrb && (
-        // AssistantOrb expects (post, at: XY). We forward to onPortal.
-        <AssistantOrb onPortal={(post, at) => onPortal(post, at)} />
-      )}
-    </div>
+      {/* Voice orb – floats over everything, uses the hover coordinates */}
+      {!hideOrb && <AssistantOrb onPortal={onPortal} />}
+    </>
   );
 }
