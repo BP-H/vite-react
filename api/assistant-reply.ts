@@ -1,11 +1,8 @@
-// api/assistant-reply.ts
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+// api/assistant-reply.js
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ ok: false, error: 'POST only' });
   }
-
   try {
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) return res.status(500).json({ ok: false, error: 'Missing OPENAI_API_KEY' });
@@ -24,7 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are the SuperNOVA voice. Keep replies short (1–2 sentences). If user asks to change visuals (dark/light, orb count, orb color), still respond briefly.' },
+          { role: 'system', content: 'You are the SuperNOVA voice. Keep replies short (1–2 sentences).' },
           { role: 'user', content: q },
         ],
         temperature: 0.7,
@@ -32,9 +29,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     const j = await r.json();
-    const text: string = j?.choices?.[0]?.message?.content?.trim?.() || '';
+    const text = j?.choices?.[0]?.message?.content?.trim?.() || '';
     return res.status(200).json({ ok: true, text });
-  } catch (e: any) {
+  } catch (e) {
     return res.status(500).json({ ok: false, error: e?.message || 'server error' });
   }
 }
