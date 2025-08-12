@@ -1,50 +1,70 @@
-import { useEffect, useRef, useState } from "react";
-import { Feed2D, World3D } from "./components";
-import "./portal.css";
-
-export type Post = { id: string; title: string; author: string };
-
-const demo: Post[] = [
-  { id: "1", title: "Prototype Moment", author: "@proto_ai" },
-  { id: "2", title: "Symbolic Feed", author: "@neonfork" },
-  { id: "3", title: "Ocean Study", author: "@superNova_2177" },
-];
-
-type Mode = "feed" | "world";
+// src/App.tsx
+import { useCallback, useMemo, useState } from "react";
+import "./styles.css";
+import BackgroundVoid from "./three/BackgroundVoid";
+import Sidebar from "./components/Sidebar";
+import Feed2D, { Post } from "./components/Feed2D";
+import World3D from "./components/World3D";
 
 export default function App() {
-  const [mode, setMode] = useState<Mode>("feed");
+  const [mode, setMode] = useState<"feed" | "world">("feed");
   const [selected, setSelected] = useState<Post | null>(null);
-  const flashRef = useRef<HTMLDivElement | null>(null);
+  const [burst, setBurst] = useState<{ on: boolean; x: number; y: number }>({
+    on: false,
+    x: 0,
+    y: 0,
+  });
 
-  const enterWorld = (p: Post) => {
+  const enterWorld = useCallback((p: Post, at?: { x: number; y: number }) => {
     setSelected(p);
-    const el = flashRef.current;
-    if (el) {
-      el.classList.remove("flash--run");
-      // restart the white-flash animation
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      el.offsetHeight;
-      el.classList.add("flash--run");
-    }
-    setTimeout(() => setMode("world"), 260);
-  };
+    setBurst({ on: true, x: at?.x ?? window.innerWidth / 2, y: at?.y ?? window.innerHeight / 2 });
+    // after the white-burst covers the screen, switch mode
+    setTimeout(() => {
+      setMode("world");
+      setBurst((b) => ({ ...b, on: false }));
+    }, 650);
+  }, []);
 
-  const backToFeed = () => {
+  const leaveWorld = useCallback(() => {
     setMode("feed");
-    setSelected(null);
-  };
+  }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = mode === "world" ? "hidden" : "auto";
-    return () => { document.body.style.overflow = "auto"; };
-  }, [mode]);
+  const overlayStyle = useMemo(
+    () =>
+      ({
+        "--px": `${burst.x}px`,
+        "--py": `${burst.y}px`,
+      }) as React.CSSProperties,
+    [burst.x, burst.y]
+  );
 
   return (
-    <div className="app">
-      {mode === "feed" && <Feed2D posts={demo} onEnterWorld={enterWorld} />}
-      {mode === "world" && selected && <World3D post={selected} onBack={backToFeed} />}
-      <div ref={flashRef} className="flash" />
+    <div style={{ position: "relative" }}>
+      {/* living 3D background under everything */}
+      <BackgroundVoid />
+
+      {/* UI layer */}
+      <div className="apple-white-bg" style={{ position: "relative", zIndex: 1 }}>
+        {mode === "feed" ? (
+          <div className="app-root">
+            <Sidebar onOpen={() => enterWorld({ id: -1, author: "@proto_ai", title: "Prototype Moment", image: "" })} />
+            <main className="content">
+              <Feed2D onEnterWorld={enterWorld} />
+            </main>
+          </div>
+        ) : (
+          <main className="content" style={{ padding: 0 }}>
+            <World3D selected={selected} onBack={leaveWorld} />
+          </main>
+        )}
+      </div>
+
+      {/* expanding white portal */}
+      <div
+        className={`portal-overlay ${burst.on ? "on" : ""}`}
+        style={overlayStyle}
+        aria-hidden
+      />
     </div>
   );
 }
