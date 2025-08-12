@@ -16,7 +16,7 @@ type Post = {
   kind: Kind;
 };
 
-function makeBatch(offset: number, size = 10): Post[] {
+function makeBatch(offset: number, size = 12): Post[] {
   const out: Post[] = [];
   for (let i = 0; i < size; i++) {
     const n = offset + i;
@@ -29,15 +29,10 @@ function makeBatch(offset: number, size = 10): Post[] {
           ? 'Low-poly moment — rotating differently in each instance as you scroll.'
           : 'Prototype feed — symbolic demo copy for layout testing.',
     };
-
     if (n % 3 === 0) {
       out.push({ ...base, kind: '3d' });
     } else if (n % 2 === 0) {
-      out.push({
-        ...base,
-        kind: 'img',
-        image: `https://picsum.photos/seed/sn_${n}/960/540`,
-      });
+      out.push({ ...base, kind: 'img', image: `https://picsum.photos/seed/sn_${n}/960/540` });
     } else {
       out.push({ ...base, kind: 'text' });
     }
@@ -52,7 +47,6 @@ export default function App() {
   const [hasMore, setHasMore] = useState(true);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  // Infinite feed
   useEffect(() => {
     if (!sentinelRef.current) return;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -84,9 +78,7 @@ export default function App() {
       <header className="header">
         <div className="header__brand">GLOBALRUNWAYAI</div>
         <div className="header__spacer" />
-        <a className="btn btn--primary" href="#">
-          Launch 3D
-        </a>
+        <a className="btn btn--primary" href="#">Launch 3D</a>
       </header>
 
       <div className="shell">
@@ -96,11 +88,8 @@ export default function App() {
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <div
                 style={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 12,
-                  background: '#fff',
-                  border: '1px solid var(--line)',
+                  width: 42, height: 42, borderRadius: 12,
+                  background: '#fff', border: '1px solid var(--line)',
                 }}
               />
               <div>
@@ -112,15 +101,7 @@ export default function App() {
 
           <div className="card card--pad nav">
             <div className="stack">
-              {[
-                'Feed',
-                'Messages',
-                'Proposals',
-                'Decisions',
-                'Execution',
-                'Companies',
-                'Settings',
-              ].map((l) => (
+              {['Feed','Messages','Proposals','Decisions','Execution','Companies','Settings'].map((l) => (
                 <button key={l}>{l}</button>
               ))}
             </div>
@@ -129,20 +110,14 @@ export default function App() {
           <div className="card card--pad">
             <div style={{ color: 'var(--ink-2)', marginBottom: 8 }}>Quick stats</div>
             <div className="stack">
-              <div>
-                <b>2,302</b> profile views
-              </div>
-              <div>
-                <b>1,542</b> post reach
-              </div>
-              <div>
-                <b>12</b> companies
-              </div>
+              <div><b>2,302</b> profile views</div>
+              <div><b>1,542</b> post reach</div>
+              <div><b>12</b> companies</div>
             </div>
           </div>
         </aside>
 
-        {/* Center */}
+        {/* Center feed */}
         <section className="center" style={{ display: 'grid', gap: 16 }}>
           <PortalHero />
 
@@ -150,55 +125,46 @@ export default function App() {
             <PostComposer />
           </div>
 
-          <div className="feed">
-            {items.map((p) => (
-              <article key={p.id} className="card card--pad post">
-                <header>
-                  <strong>{p.author}</strong>
-                  <span className="muted"> • {p.time}</span>
-                </header>
+          {items.map((p) => (
+            <article key={p.id} className="card card--pad post">
+              <header>
+                <strong>{p.author}</strong>
+                <span className="muted"> • {p.time}</span>
+              </header>
 
-                {p.kind === '3d' ? (
-                  <ThreeCard
-                    variant={
-                      Number(p.id) % 3 === 0
-                        ? 'knot'
-                        : Number(p.id) % 3 === 1
-                        ? 'cube'
-                        : 'ico'
-                    }
+              {p.kind === '3d' ? (
+                <ThreeCard
+                  variant={
+                    Number(p.id) % 3 === 0 ? 'knot' :
+                    Number(p.id) % 3 === 1 ? 'cube' : 'ico'
+                  }
+                />
+              ) : p.kind === 'img' && p.image ? (
+                <div className="img">
+                  <img
+                    src={p.image}
+                    alt={(p.alt || p.text || 'Post image').slice(0, 80)}
+                    loading="lazy"
+                    decoding="async"
                   />
-                ) : p.kind === 'img' && p.image ? (
-                  <div className="img">
-                    <img
-                      src={p.image}
-                      alt={(p.alt || p.text || 'Post image').slice(0, 80)}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </div>
-                ) : null}
+                </div>
+              ) : null}
 
-                <p style={{ marginTop: 10 }}>{p.text}</p>
+              <p style={{ marginTop: 10 }}>{p.text}</p>
 
-                <footer style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                  <button className="btn">Like</button>
-                  <button className="btn">Comment</button>
-                  <button className="btn">Share</button>
-                </footer>
-              </article>
-            ))}
-            <div
-              ref={sentinelRef}
-              style={{
-                height: 44,
-                display: 'grid',
-                placeItems: 'center',
-                color: 'var(--ink-2)',
-              }}
-            >
-              {loading ? 'Loading…' : hasMore ? '' : '— End —'}
-            </div>
+              <footer style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                <button className="btn">Like</button>
+                <button className="btn">Comment</button>
+                <button className="btn">Share</button>
+              </footer>
+            </article>
+          ))}
+
+          <div
+            ref={sentinelRef}
+            style={{ height: 44, display: 'grid', placeItems: 'center', color: 'var(--ink-2)' }}
+          >
+            {loading ? 'Loading…' : hasMore ? '' : '— End —'}
           </div>
         </section>
 
