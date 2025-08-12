@@ -15,8 +15,10 @@ const FLY_MS = 600;
 
 export default function AssistantOrb({
   onPortal,
+  hidden = false,
 }: {
   onPortal: (post: Post, at: { x: number; y: number }) => void;
+  hidden?: boolean;
 }) {
   const dock = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [pos, setPos] = useState<{ x: number; y: number }>(() => {
@@ -55,7 +57,7 @@ export default function AssistantOrb({
     });
   }, [onPortal]);
 
-  // Simple Web Speech hook-up
+  // Web Speech (best-effort)
   useEffect(() => {
     const Ctor: any = window.webkitSpeechRecognition || window.SpeechRecognition;
     if (!Ctor) return;
@@ -87,7 +89,10 @@ export default function AssistantOrb({
     }
   };
 
-  const style = useMemo(() => ({ left: pos.x + "px", top: pos.y + "px" }), [pos]);
+  const style = useMemo(
+    () => ({ left: pos.x + "px", top: pos.y + "px", display: hidden ? "none" : undefined }),
+    [pos, hidden]
+  );
 
   return (
     <button
