@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import bus from "../lib/bus";
+import bus, { Events } from "../lib/bus";
 import "./Sidebar.css";
 
 type Species = "human" | "company" | "ai";
@@ -29,11 +29,11 @@ export default function Sidebar() {
   const viewers = useMemo(() => 2862, []);
   const impressions = useMemo(() => 1442, []);
 
-  useEffect(() => { bus.emit("identity:update", { species, decisionKind }); }, [species, decisionKind]);
-  useEffect(() => { bus.emit("search:update", { query }); }, [query]);
-  useEffect(() => { bus.emit("backend:update", { useReal, backendUrl }); }, [useReal, backendUrl]);
+  useEffect(() => { bus.emit(Events.IdentityUpdate, { species, decisionKind }); }, [species, decisionKind]);
+  useEffect(() => { bus.emit(Events.SearchUpdate, { query }); }, [query]);
+  useEffect(() => { bus.emit(Events.BackendUpdate, { useReal, backendUrl }); }, [useReal, backendUrl]);
 
-  const goto = (label: string) => bus.emit("nav:goto", { label });
+  const goto = (label: string) => bus.emit(Events.NavGoto, { label });
 
   const placeholderSvg = `data:image/svg+xml;utf8,${encodeURIComponent(`
   <svg xmlns='http://www.w3.org/2000/svg' width='128' height='128' viewBox='0 0 128 128'>

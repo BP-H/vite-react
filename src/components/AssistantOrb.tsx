@@ -1,6 +1,6 @@
 // src/components/AssistantOrb.tsx
 import { useEffect, useMemo, useRef, useState } from "react";
-import bus from "../lib/bus";
+import bus, { Events } from "../lib/bus";
 import { Post } from "../types";
 
 /** Web Speech shim (do NOT redeclare speechSynthesis types) */
@@ -46,7 +46,7 @@ export default function AssistantOrb({
 
   // Fly to hovered card, then portal
   useEffect(() => {
-    return bus.on("orb:portal", (payload: { post: Post; x: number; y: number }) => {
+    return bus.on(Events.OrbPortal, (payload: { post: Post; x: number; y: number }) => {
       setFlying(true);
       setPos({ x: payload.x, y: payload.y });
       window.setTimeout(() => {
@@ -69,7 +69,7 @@ export default function AssistantOrb({
   const [toast, setToast] = useState("");
 
   // track hovered card so “enter world” knows where to fly
-  useEffect(() => bus.on("feed:hover", (p) => (lastHoverRef.current = p)), []);
+  useEffect(() => bus.on(Events.FeedHover, (p) => (lastHoverRef.current = p)), []);
 
   // 1) Unlock audio + warm voices (first user gesture)
   async function unlockAudioAndVoices() {
@@ -238,38 +238,38 @@ export default function AssistantOrb({
       const final = finals.map((r: any) => r[0]?.transcript || "").join(" ").trim();
       if (!final) return;
 
-      bus.emit("chat:add", { role: "user", text: final });
+      bus.emit(Events.ChatAdd, { role: "user", text: final });
 
       // Local intents first (fast UI)
       const t = final.toLowerCase();
       if ((/enter|open/.test(t)) && /(world|portal|void)/.test(t)) {
         const target =
           lastHoverRef.current ?? { post: DEFAULT_POST, x: window.innerWidth - 56, y: window.innerHeight - 56 };
-        bus.emit("orb:portal", target);
+        bus.emit(Events.OrbPortal, target);
         await speak("Entering world.");
         setToast("");
         return;
       }
       if ((/leave|exit|back/.test(t)) && /(world|portal|feed|void)/.test(t)) {
-        bus.emit("ui:leave", {});
+        bus.emit(Events.UiLeave, {});
         await speak("Back to feed.");
         setToast("");
         return;
       }
       if (/make (it )?dark(er)?|dark mode/.test(t)) {
-        bus.emit("world:update", { theme: "dark" });
+        bus.emit(Events.WorldUpdate, { theme: "dark" });
         await speak("Dark mode.");
         setToast("");
         return;
       }
       if (/light(er)? mode|bright(er)?/.test(t)) {
-        bus.emit("world:update", { theme: "light" });
+        bus.emit(Events.WorldUpdate, { theme: "light" });
         await speak("Light mode.");
         setToast("");
         return;
       }
       if (/(more|add) orbs?/.test(t)) {
-        bus.emit("world:update", { orbCount: 20 });
+        bus.emit(Events.WorldUpdate, { orbCount: 20 });
         await speak("More orbs.");
         setToast("");
         return;
@@ -286,7 +286,7 @@ export default function AssistantOrb({
           white: "#ffffff",
           black: "#111827",
         };
-        bus.emit("world:update", { orbColor: named[m[2]] || "#67e8f9" });
+        bus.emit(Events.WorldUpdate, { orbColor: named[m[2]] || "#67e8f9" });
         await speak(`Orbs ${m[2]}.`);
         setToast("");
         return;
@@ -295,7 +295,7 @@ export default function AssistantOrb({
       // Ask the assistant (uses env OPENAI_API_KEY on server, or localStorage key in dev)
       const reply = await askAssistant(final);
       const say = reply || "Okay.";
-      bus.emit("chat:add", { role: "assistant", text: say });
+      bus.emit(Events.ChatAdd, { role: "assistant", text: say });
       await speak(say);
       setToast("");
     };
@@ -324,7 +324,7 @@ export default function AssistantOrb({
     const ok = await ensureMic();
     if (!ok) {
       setToast("Mic blocked — allow in site settings / use HTTPS");
-      bus.emit("chat:add", {
+      bus.emit(Events.ChatAdd, {
         role: "system",
         text: "Microphone blocked. Click the padlock → allow microphone.",
       });
