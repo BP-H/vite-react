@@ -8,7 +8,6 @@
   --pc-ring: rgba(106,115,255,.22);
 }
 
-/* Make each post full viewport width even if the feed is centered */
 .pc,
 .post-card {
   position: relative;
@@ -20,11 +19,9 @@
   background: transparent;
 }
 
-/* thin background line BETWEEN posts */
 .pc + .pc,
 .post-card + .post-card { margin-top: 12px; }
 
-/* Media fills the viewport width edge-to-edge */
 .pc-media,
 .post-media { position: relative; }
 .pc-media img, .pc-media video, .pc-media canvas,
@@ -32,7 +29,7 @@
   display:block; width:100vw; height:auto; background:#0f1117;
 }
 
-/* ---------- Frosted bars (overlay on the image, no inner gaps) ---------- */
+/* Frosted bars */
 .pc-topbar, .pc-botbar{
   position:absolute; left:10px; right:10px;
   height:56px; padding:8px 12px; display:flex; align-items:center; gap:12px;
@@ -46,7 +43,7 @@
 .pc-topbar{ top:10px; }
 .pc-botbar{ bottom:10px; }
 
-/* top bar: avatar + handle + tiny meta + title chip on the right */
+/* top bar: avatar + meta + title */
 .pc-ava{
   width:38px; height:38px; border-radius:999px; overflow:hidden;
   border:1px solid var(--pc-stroke); background:#111423;
@@ -65,7 +62,7 @@
   font-weight:800;
 }
 
-/* tiny glow badge that some posts use on top-left of the photo */
+/* optional glow badge */
 .pc-badge{
   position:absolute; top:10px; left:10px; z-index:3;
   width:56px; height:56px; border-radius:999px; overflow:hidden;
@@ -74,7 +71,7 @@
   box-shadow:0 0 0 6px rgba(106,115,255,.12), 0 10px 30px rgba(0,0,0,.35);
 }
 
-/* ---------- Bottom actions (5 minimal chips) ---------- */
+/* Bottom actions (5 minimal chips) */
 .pc-actions{
   display:flex; align-items:center; justify-content:space-between;
   gap:8px; width:100%;
@@ -94,7 +91,7 @@
   box-shadow: 0 0 0 2px var(--pc-ring) inset, 0 10px 24px rgba(0,0,0,.25);
 }
 
-/* leftmost = profile chip (circular avatar instead of icon) */
+/* leftmost profile chip */
 .pc-act.profile{
   padding-left:8px; padding-right:12px;
 }
@@ -104,40 +101,34 @@
   box-shadow:0 0 0 5px rgba(106,115,255,.18);
 }
 
-/* minimalist SVG mask icons (Apple-y, single color with currentColor) */
+/* icon masks */
 .ico{
   width:18px; height:18px; display:inline-block; background: currentColor;
   -webkit-mask: no-repeat center / contain; mask: no-repeat center / contain;
   opacity:.95;
 }
-
-/* heart */
 .ico.heart{
   -webkit-mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 21s-6.7-4-9.5-7.6a6.1 6.1 0 0 1 9-8.1l.5.6.5-.6a6.1 6.1 0 0 1 9 8.1C18.7 17 12 21 12 21Z' fill='%23000'/></svg>");
           mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 21s-6.7-4-9.5-7.6a6.1 6.1 0 0 1 9-8.1l.5.6.5-.6a6.1 6.1 0 0 1 9 8.1C18.7 17 12 21 12 21Z' fill='%23000'/></svg>");
 }
-/* comment */
 .ico.comment{
   -webkit-mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M4 4h16a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-5 5v-5H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z' fill='%23000'/></svg>");
           mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M4 4h16a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H9l-5 5v-5H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z' fill='%23000'/></svg>");
 }
-/* share */
 .ico.share{
   -webkit-mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M7 12l10-9v6h4v6h-4v6L7 12z' fill='%23000'/></svg>");
           mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M7 12l10-9v6h4v6h-4v6L7 12z' fill='%23000'/></svg>");
 }
-/* portal / world */
 .ico.world{
   -webkit-mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm-1 17.9A8 8 0 0 1 4.1 13H11v6.9Zm0-8.9H4.1A8 8 0 0 1 11 4.1V11Zm2 8.9V13h6.9A8 8 0 0 1 13 19.9ZM13 11V4.1A8 8 0 0 1 19.9 11H13Z' fill='%23000'/></svg>");
           mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm-1 17.9A8 8 0 0 1 4.1 13H11v6.9Zm0-8.9H4.1A8 8 0 0 1 11 4.1V11Zm2 8.9V13h6.9A8 8 0 0 1 13 19.9ZM13 11V4.1A8 8 0 0 1 19.9 11H13Z' fill='%23000'/></svg>");
 }
-/* save / bookmark */
 .ico.save{
   -webkit-mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 2h12a2 2 0 0 1 2 2v18l-8-4-8 4V4a2 2 0 0 1 2-2Z' fill='%23000'/></svg>");
           mask-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6 2h12a2 2 0 0 1 2 2v18l-8-4-8 4V4a2 2 0 0 1 2-2Z' fill='%23000'/></svg>");
 }
 
-/* optional: drawer that slides open under the post when an action is tapped */
+/* slide-out drawer */
 .pc-drawer{
   max-height:0; overflow:hidden;
   transition:max-height .25s ease, opacity .18s ease, transform .18s ease;
@@ -148,5 +139,4 @@
 }
 .pc.dopen .pc-drawer{ max-height:420px; opacity:1; transform: none; }
 
-/* keep clickable overlays above */
 .pc-topbar, .pc-botbar, .pc-badge { pointer-events:auto; }
