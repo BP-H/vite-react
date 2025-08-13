@@ -15,6 +15,22 @@ body{ margin:0; color:var(--text);
 /* Keep any 3D/canvas background click-through */
 canvas{ pointer-events:none }
 
+/* src/styles.css (append) */
+html, body { height: 100%; background:#0e0f14; }
+body { margin: 0; overflow-x: hidden; color: #e9edf7; -webkit-font-smoothing: antialiased; }
+
+.layout { display: flex; gap: 16px; align-items: flex-start; }
+.content-col { flex: 1; min-width: 0; }
+
+/* Auto-collapse the sidebar on mobile */
+@media (max-width: 900px){
+  .nova-sidebar, .snv-sidebar { width: 76px; min-width: 76px; }
+}
+@media (max-width: 700px){
+  .nova-sidebar, .snv-sidebar { display: none; }
+  .content-col { padding: 0; }
+}
+
 /* ---------- Feed column ---------- */
 .feed-frame{ position:relative; z-index:1; display:flex; justify-content:center; padding: 0 0 72px; }
 .feed-col{ width:100vw; display:flex; flex-direction:column; gap:10px; }
