@@ -1,136 +1,80 @@
 import { Post } from "../../types";
 
 export default function Feed({ onPortal }: { onPortal?: (p: Post, at?: { x: number; y: number }) => void }) {
+  // Hardcoded posts to ensure something renders
   const posts: Post[] = [
     { 
       id: 1, 
-      author: "@forest_bot", 
-      title: "Low-poly dreams", 
-      image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2400",
-      space: "superNova_2177"
+      author: "@proto_ai", 
+      title: "Test Post 1", 
+      image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%234c1d95' width='400' height='400'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='30'%3EImage 1%3C/text%3E%3C/svg%3E"
     },
     { 
       id: 2, 
-      author: "@proto_ai", 
-      title: "Ocean study", 
-      image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2400",
-      space: "GLOBALRUNWAY"
-    },
-    { 
-      id: 3, 
       author: "@eva", 
-      title: "Neon cascade", 
-      image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=2400",
-      space: "superNova_2177"
+      title: "Test Post 2", 
+      image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23dc2626' width='400' height='400'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='30'%3EImage 2%3C/text%3E%3C/svg%3E"
     },
   ];
 
+  // Inline everything to avoid CSS issues
   return (
     <div style={{ 
       width: "100%", 
-      display: "flex", 
-      flexDirection: "column", 
-      gap: "20px",
-      padding: "20px 0"
+      minHeight: "100vh",
+      background: "#0b0d12",
+      color: "white",
+      padding: "20px"
     }}>
+      <h1 style={{ color: "white", marginBottom: "20px" }}>Feed is Working!</h1>
+      
       {posts.map((post) => (
-        <article key={post.id} style={{
-          position: "relative",
-          width: "100%",
-          height: "600px",
-          overflow: "hidden",
-          borderRadius: "16px",
-          background: "#0f1117"
-        }}>
+        <div 
+          key={post.id} 
+          style={{
+            marginBottom: "20px",
+            padding: "20px",
+            background: "rgba(255,255,255,0.1)",
+            borderRadius: "12px",
+            border: "1px solid rgba(255,255,255,0.2)"
+          }}
+        >
           <img 
             src={post.image} 
             alt={post.title}
             style={{
               width: "100%",
-              height: "100%",
-              objectFit: "cover"
+              height: "300px",
+              objectFit: "cover",
+              borderRadius: "8px",
+              marginBottom: "10px"
             }}
           />
-          
-          {/* Top bar */}
-          <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            padding: "16px",
-            background: "rgba(18, 20, 32, 0.6)",
-            backdropFilter: "blur(20px)",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px"
-          }}>
-            <div style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #fff, #ff74de, #ff4bd0)"
-            }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ color: "#fff", fontWeight: "bold" }}>{post.author}</div>
-              <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>
-                now · {post.space || "#superNova"}
-              </div>
-            </div>
-            <div style={{
-              padding: "6px 12px",
-              background: "rgba(255,255,255,0.1)",
-              borderRadius: "999px",
-              color: "#fff",
-              fontSize: "14px",
-              fontWeight: "bold"
-            }}>
-              {post.title}
-            </div>
-          </div>
-
-          {/* Bottom bar */}
-          <div style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            padding: "16px",
-            background: "rgba(18, 20, 32, 0.6)",
-            backdropFilter: "blur(20px)",
-            display: "flex",
-            justifyContent: "space-around"
-          }}>
-            <button style={buttonStyle}>❤️</button>
-            <button style={buttonStyle}>💬</button>
-            <button 
-              style={{...buttonStyle, background: "rgba(255,75,208,0.3)"}}
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                onPortal?.(post, { 
-                  x: rect.left + rect.width/2, 
-                  y: rect.top + rect.height/2 
-                });
-              }}
-            >
-              ✨
-            </button>
-            <button style={buttonStyle}>📤</button>
-            <button style={buttonStyle}>🔖</button>
-          </div>
-        </article>
+          <h3 style={{ color: "white", margin: "10px 0" }}>{post.title}</h3>
+          <p style={{ color: "#aaa", marginBottom: "10px" }}>by {post.author}</p>
+          <button 
+            onClick={(e) => {
+              console.log("Button clicked for post:", post.id);
+              const rect = e.currentTarget.getBoundingClientRect();
+              onPortal?.(post, { 
+                x: rect.left + rect.width/2, 
+                y: rect.top + rect.height/2 
+              });
+            }}
+            style={{
+              padding: "10px 20px",
+              background: "#ff4bd0",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "16px"
+            }}
+          >
+            Enter World
+          </button>
+        </div>
       ))}
     </div>
   );
 }
-
-const buttonStyle: React.CSSProperties = {
-  width: "44px",
-  height: "44px",
-  borderRadius: "12px",
-  border: "1px solid rgba(255,255,255,0.2)",
-  background: "rgba(20,22,34,0.7)",
-  color: "#fff",
-  fontSize: "18px",
-  cursor: "pointer"
-};
