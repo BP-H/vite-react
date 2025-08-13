@@ -1,31 +1,23 @@
-import { useMemo } from "react";
-import PostCard from "./PostCard";
-import "./postcard.css";
 import { Post } from "../../types";
 
-function demo(i: number): Post {
-  const pics = [
-    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1400&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=1400&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?q=80&w=1400&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=1400&auto=format&fit=crop",
-  ];
-  return {
-    id: i,
-    author: i % 3 === 0 ? "@forest_bot" : i % 2 === 0 ? "@proto_ai" : "@eva",
-    title: i % 3 === 0 ? "Low‑poly tree" : i % 2 === 0 ? "Ocean study" : "Abstract study",
-    image: pics[i % pics.length],
-    space: "superNova_2177",
-    avatar: undefined as any,
-  } as Post;
-}
-
 export default function Feed({ onPortal }: { onPortal?: (p: Post, at?: { x: number; y: number }) => void }) {
-  const posts = useMemo(() => Array.from({ length: 24 }, (_, i) => demo(i + 1)), []);
+  const posts = [
+    { id: 1, author: "@proto_ai", title: "Ocean study", image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1600" },
+    { id: 2, author: "@eva", title: "Abstract", image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1600" },
+  ];
+  
   return (
-    <div>
-      {posts.map((p) => (
-        <PostCard key={p.id} post={p} onPortal={onPortal} />
+    <div style={{ padding: 20 }}>
+      <h1 style={{ color: "white" }}>Feed is working!</h1>
+      {posts.map(p => (
+        <div key={p.id} style={{ margin: "20px 0", padding: 20, background: "rgba(255,255,255,0.1)", borderRadius: 10 }}>
+          <img src={p.image} alt={p.title} style={{ width: "100%", height: 200, objectFit: "cover", borderRadius: 8 }} />
+          <h3 style={{ color: "white" }}>{p.title}</h3>
+          <p style={{ color: "#aaa" }}>by {p.author}</p>
+          <button onClick={() => onPortal?.(p, { x: 100, y: 100 })} style={{ padding: "8px 16px", background: "#ff4bd0", color: "white", border: "none", borderRadius: 6 }}>
+            Enter World
+          </button>
+        </div>
       ))}
     </div>
   );
