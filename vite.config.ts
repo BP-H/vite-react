@@ -1,10 +1,11 @@
-// vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  base: '/',           // ← ADD THIS (critical for Vercel)
   build: {
+    outDir: 'dist',    // ← ADD THIS (tells Vercel where built files are)
     rollupOptions: {
       output: {
         manualChunks(id) {
