@@ -1,16 +1,14 @@
-// Minimal app-wide types that match the feed components
+// src/types.ts
 
 export interface Post {
   id: number | string;
 
-  // UI text
-  author?: string;   // e.g. "@proto_ai"
-  title?: string;    // e.g. "Ocean study"
+  // Core properties
+  author?: string;
+  title?: string;
+  image?: string;
 
-  // media
-  image?: string;    // image URL
-
-  // extra meta used in top bar (optional)
-  space?: string;    // e.g. "superNova_2177"
-  avatar?: string;   // avatar URL (can be data: url or http)
+  // Add these two optional properties to fix the build error
+  space?: string;   // e.g. "superNova_2177"
+  avatar?: string;  // URL for the author's avatar
 }
