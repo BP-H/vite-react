@@ -5,7 +5,9 @@
 }
 *{ box-sizing:border-box }
 html,body,#root{ height:100% }
-body{ margin:0; color:var(--text);
+body{ 
+  margin:0; 
+  color:var(--text);
   background:
     radial-gradient(120% 100% at -20% -20%, rgba(255,75,208,.18), transparent 60%),
     linear-gradient(180deg,#0f1117,#10131a);
@@ -15,12 +17,11 @@ body{ margin:0; color:var(--text);
 /* Keep any 3D/canvas background click-through */
 canvas{ pointer-events:none }
 
-/* src/styles.css (append) */
 html, body { height: 100%; background:#0e0f14; }
 body { margin: 0; overflow-x: hidden; color: #e9edf7; -webkit-font-smoothing: antialiased; }
 
 .layout { display: flex; gap: 16px; align-items: flex-start; }
-.content-col { flex: 1; min-width: 0; }
+.content { flex: 1; min-width: 0; padding: 20px; }
 
 /* Auto-collapse the sidebar on mobile */
 @media (max-width: 900px){
@@ -28,116 +29,30 @@ body { margin: 0; overflow-x: hidden; color: #e9edf7; -webkit-font-smoothing: an
 }
 @media (max-width: 700px){
   .nova-sidebar, .snv-sidebar { display: none; }
-  .content-col { padding: 0; }
+  .content { padding: 0; }
 }
 
 /* ---------- Feed column ---------- */
 .feed-frame{ position:relative; z-index:1; display:flex; justify-content:center; padding: 0 0 72px; }
 .feed-col{ width:100vw; display:flex; flex-direction:column; gap:10px; }
 
-/* a post covers the full width; the 10px gap shows the page background */
-.post-card.edge{
-  position:relative;
-  width:100vw;
-  overflow:hidden;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
+/* Assistant orb - needed for bottom-right orb */
+.assistant-orb {
+  position: fixed;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff, #ff9ae5 60%, #ff4bd0);
+  box-shadow: 0 8px 32px rgba(255,75,208,.4);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 100;
 }
 
-/* ---------- Top frosted strip ---------- */
-.glass{
-  backdrop-filter: blur(14px) saturate(150%);
-  background: rgba(18,22,35,.55);
-  border: 1px solid rgba(255,255,255,.06);
-  box-shadow: 0 12px 30px rgba(0,0,0,.25);
+.assistant-orb__core {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff, #ff74de);
 }
-.post-top{
-  position:absolute; left:12px; right:12px; top:12px;
-  display:flex; gap:10px; align-items:center; padding:10px 12px;
-  border-radius:16px;
-}
-.post-top__avatar{ width:44px; height:44px; border-radius:999px; border:1px solid var(--stroke); object-fit:cover; background:#0f1117; }
-.post-top__meta{ display:flex; flex-direction:column; gap:4px; min-width:0 }
-.post-top__line{ display:flex; align-items:center; gap:8px; opacity:.9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.post-top__handle{ font-weight:800 }
-.post-top__dot svg{ display:block; opacity:.6 }
-.post-top__time,.post-top__space{ color:var(--muted); font-size:12px }
-.post-top__title{ font-weight:800; font-size:18px; letter-spacing:.2px }
-
-/* ---------- Image / media ---------- */
-.post-media img, .post-media video, .post-media canvas{
-  width:100vw; height:auto; display:block; background:#0f1117;
-}
-.post-media__fallback{ height:46vw; background: linear-gradient(120deg,#1f2336,#101423); }
-
-/* ---------- thin internal separator under media ---------- */
-.post-gap{ height:8px; }
-
-/* ---------- Bottom frosted strip with 5 items ---------- */
-.post-bot{
-  position:relative; margin:0 12px 12px; border-radius:16px;
-  display:flex; align-items:center; gap:8px; padding:6px 8px;
-}
-.icon-btn{
-  display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 12px;
-  border-radius:999px; border:1px solid rgba(255,255,255,.12);
-  background:#111423; color:#e9ecf1; cursor:pointer; font-weight:600;
-  transition: box-shadow .15s, border-color .15s, transform .1s, opacity .15s;
-}
-.icon-btn:hover{ border-color:#7c83ff; box-shadow:0 0 0 2px rgba(124,131,255,.2) inset; transform:translateY(-1px); }
-.icon-btn.on{ box-shadow:0 0 0 2px rgba(124,131,255,.25) inset; border-color:#7c83ff; }
-.icon-btn svg{ display:block }
-.icon-btn span{ font-size:14px; opacity:.95 }
-.icon-btn.enter{ margin-left:auto; }
-.avatar-btn{ padding:0 6px 0 0; }
-.post-bot__avatar{ width:32px; height:32px; border-radius:999px; border:1px solid var(--stroke); background:#0f1117; }
-
-/* ---------- Drawer ---------- */
-.post-drawer{ max-height:0; opacity:0; overflow:hidden; transform: translateY(-6px); transition: max-height .25s ease, opacity .2s ease, transform .2s ease; }
-.post-drawer.open{ max-height:360px; opacity:1; transform: translateY(0); }
-
-.drawer{ margin: 0 12px 10px; border-radius:16px; padding:12px; }
-.drawer-row{ display:flex; gap:8px; flex-wrap:wrap; }
-.drawer-row.right{ justify-content:flex-end }
-.drawer-sub{ color:var(--muted); font-size:12px; margin:8px 2px }
-.chip{
-  height:34px; padding:0 12px; border-radius:999px; border:1px solid rgba(255,255,255,.12);
-  background:#131724; color:#fff; cursor:pointer; font-weight:600;
-}
-.chip.primary{ background:#1a1f3d; border-color:#2b3561; box-shadow:0 0 0 2px rgba(124,131,255,.25) inset; }
-.emoji-grid{ display:grid; grid-template-columns: repeat(12, 1fr); gap:8px; }
-.emoji{ height:36px; border-radius:10px; background:#161b2d; border:1px solid rgba(255,255,255,.1); font-size:20px; }
-.comment-box{
-  width:100%; resize:vertical; padding:10px 12px; border-radius:12px;
-  border:1px solid var(--stroke); background:#0c0f19; color:#e9ecf1;
-}
-
-/* ---------- Floating profile FAB + sidebar ---------- */
-.profile-fab{
-  position: fixed; z-index: 70; left: 12px; top: 12px;
-  width: 56px; height: 56px; border-radius: 999px;
-  border:1px solid rgba(255,255,255,.15);
-  background: radial-gradient(120% 120% at 30% 30%, #ffffff, #ffd8f4 60%, #ff74de);
-  box-shadow: 0 8px 32px rgba(255,75,208,.35), inset 0 1px 0 rgba(255,255,255,.7);
-  display:grid; place-items:center; cursor:pointer;
-}
-.pfab-core{ width:26px; height:26px; border-radius:50%; background: radial-gradient(circle at 30% 30%, #fff, #ff9ae5 60%, #ff4bd0); box-shadow: inset 0 0 28px rgba(255,255,255,.5); }
-.pfab-core.sm{ width:18px; height:18px }
-
-/* side panel */
-.side-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.35); opacity:0; pointer-events:none; transition:opacity .2s; z-index:65; }
-.side-overlay.on{ opacity:1; pointer-events:auto; }
-.side-panel{
-  position:fixed; top:0; bottom:0; left:0; width:280px; background:linear-gradient(180deg,#0f1117,#10131a);
-  border-right:1px solid var(--stroke); transform: translateX(-110%); transition: transform .28s cubic-bezier(.22,.61,.36,1); z-index:66; padding:14px;
-}
-.side-panel.on{ transform: translateX(0); }
-.side-head{ display:flex; align-items:center; gap:10px; font-weight:800; margin-bottom:12px }
-.side-nav button{
-  width:100%; height:40px; border-radius:12px; text-align:left; padding-left:12px;
-  background:#131724; color:#e9ecf1; border:1px solid var(--stroke); font-weight:600; margin:4px 0;
-}
-.side-nav button:hover{ border-color:#7c83ff; box-shadow:0 0 0 2px rgba(124,131,255,.2) inset; }
-
-/* ---------- Assistant orb tiny toast stays as-is from your project ---------- */
