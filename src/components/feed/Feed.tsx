@@ -1,79 +1,157 @@
+import { useEffect } from "react";
 import { Post } from "../../types";
 
 export default function Feed({ onPortal }: { onPortal?: (p: Post, at?: { x: number; y: number }) => void }) {
-  // Hardcoded posts to ensure something renders
+  // Debug: log when component mounts
+  useEffect(() => {
+    console.log("Feed component mounted!");
+  }, []);
+
   const posts: Post[] = [
     { 
       id: 1, 
       author: "@proto_ai", 
-      title: "Test Post 1", 
-      image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%234c1d95' width='400' height='400'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='30'%3EImage 1%3C/text%3E%3C/svg%3E"
+      title: "Ocean Study", 
+      image: "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=2400"
     },
     { 
       id: 2, 
       author: "@eva", 
-      title: "Test Post 2", 
-      image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23dc2626' width='400' height='400'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' fill='white' font-size='30'%3EImage 2%3C/text%3E%3C/svg%3E"
+      title: "Neon Dreams", 
+      image: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=2400"
     },
   ];
 
-  // Inline everything to avoid CSS issues
   return (
     <div style={{ 
       width: "100%", 
       minHeight: "100vh",
-      background: "#0b0d12",
-      color: "white",
-      padding: "20px"
+      background: "linear-gradient(180deg, #0f1117, #10131a)",
+      padding: "20px 0"
     }}>
-      <h1 style={{ color: "white", marginBottom: "20px" }}>Feed is Working!</h1>
-      
+      {/* Debug header to prove it's rendering */}
+      <div style={{ 
+        padding: "20px", 
+        background: "rgba(255,75,208,0.2)", 
+        margin: "0 0 20px 0",
+        textAlign: "center"
+      }}>
+        <h1 style={{ color: "#fff", margin: 0 }}>Feed is Rendering! ✨</h1>
+        <p style={{ color: "#ff74de", margin: "10px 0 0" }}>If you see this, the app works!</p>
+      </div>
+
       {posts.map((post) => (
-        <div 
+        <article 
           key={post.id} 
           style={{
-            marginBottom: "20px",
-            padding: "20px",
-            background: "rgba(255,255,255,0.1)",
-            borderRadius: "12px",
-            border: "1px solid rgba(255,255,255,0.2)"
+            position: "relative",
+            width: "100%",
+            marginBottom: "4px",
+            background: "#0f1117",
+            overflow: "hidden"
           }}
         >
-          <img 
-            src={post.image} 
-            alt={post.title}
-            style={{
-              width: "100%",
-              height: "300px",
-              objectFit: "cover",
-              borderRadius: "8px",
-              marginBottom: "10px"
-            }}
-          />
-          <h3 style={{ color: "white", margin: "10px 0" }}>{post.title}</h3>
-          <p style={{ color: "#aaa", marginBottom: "10px" }}>by {post.author}</p>
-          <button 
-            onClick={(e) => {
-              console.log("Button clicked for post:", post.id);
-              const rect = e.currentTarget.getBoundingClientRect();
-              onPortal?.(post, { 
-                x: rect.left + rect.width/2, 
-                y: rect.top + rect.height/2 
-              });
-            }}
-            style={{
-              padding: "10px 20px",
-              background: "#ff4bd0",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontSize: "16px"
-            }}
-          >
-            Enter World
-          </button>
-        </div>
+          {/* Image */}
+          <div style={{ position: "relative", width: "100%", height: "500px" }}>
+            <img 
+              src={post.image} 
+              alt={post.title}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover"
+              }}
+              onError={(e) => {
+                // Fallback to gradient if image fails
+                const target = e.currentTarget as HTMLImageElement;
+                target.style.display = 'none';
+                if (target.parentElement) {
+                  target.parentElement.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                }
+              }}
+            />
+            
+            {/* Top glass bar */}
+            <div style={{
+              position: "absolute",
+              top: "12px",
+              left: "12px",
+              right: "12px",
+              padding: "12px",
+              background: "rgba(18,22,35,0.7)",
+              backdropFilter: "blur(20px)",
+              borderRadius: "16px",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px"
+            }}>
+              <div style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #fff, #ff74de, #ff4bd0)"
+              }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ color: "#fff", fontWeight: "bold" }}>{post.author}</div>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px" }}>now · #superNova</div>
+              </div>
+              <div style={{
+                padding: "6px 12px",
+                background: "rgba(255,255,255,0.1)",
+                borderRadius: "999px",
+                color: "#fff",
+                fontSize: "14px",
+                fontWeight: "bold"
+              }}>
+                {post.title}
+              </div>
+            </div>
+
+            {/* Bottom action bar */}
+            <div style={{
+              position: "absolute",
+              bottom: "12px",
+              left: "12px",
+              right: "12px",
+              padding: "8px",
+              background: "rgba(18,22,35,0.7)",
+              backdropFilter: "blur(20px)",
+              borderRadius: "16px",
+              display: "flex",
+              justifyContent: "space-around"
+            }}>
+              {["❤️", "💬", "✨", "🔄", "🔖"].map((icon, i) => (
+                <button
+                  key={i}
+                  onClick={(e) => {
+                    if (i === 2) { // Middle button = portal
+                      console.log("Portal button clicked!");
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      onPortal?.(post, { 
+                        x: rect.left + rect.width/2, 
+                        y: rect.top + rect.height/2 
+                      });
+                    }
+                  }}
+                  style={{
+                    width: "44px",
+                    height: "44px",
+                    borderRadius: "12px",
+                    border: i === 2 ? "1px solid #ff74de" : "1px solid rgba(255,255,255,0.2)",
+                    background: i === 2 ? "rgba(255,75,208,0.3)" : "rgba(20,22,34,0.7)",
+                    color: "#fff",
+                    fontSize: "20px",
+                    cursor: "pointer",
+                    display: "grid",
+                    placeItems: "center"
+                  }}
+                >
+                  {icon}
+                </button>
+              ))}
+            </div>
+          </div>
+        </article>
       ))}
     </div>
   );
