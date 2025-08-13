@@ -20,7 +20,13 @@ const avatarSVG =
     </svg>`
   );
 
-export default function PostCard({ post, onPortal }: { post: Post; onPortal?: (p: Post, at?: { x: number; y: number }) => void }) {
+export default function PostCard({
+  post,
+  onPortal,
+}: {
+  post: Post;
+  onPortal?: (p: Post, at?: { x: number; y: number }) => void;
+}) {
   const [open, setOpen] = useState(false);
 
   const author = post.author || "@proto_ai";
@@ -33,13 +39,23 @@ export default function PostCard({ post, onPortal }: { post: Post; onPortal?: (p
     <article className={`pc ${open ? "dopen" : ""}`} aria-label={`Post by ${author}`}>
       {/* media */}
       <div className="pc-media">
-        <img src={image} alt={title} loading="lazy" onError={(e) => ((e.currentTarget.src = fallbackImg))} />
+        <img
+          src={image}
+          alt={title}
+          loading="lazy"
+          onError={(e) => ((e.currentTarget.src = fallbackImg))}
+        />
+
         {/* top frosted bar */}
         <div className="pc-topbar">
-          <div className="pc-ava"><img src={post.avatar || avatarSVG} alt="" /></div>
+          <div className="pc-ava">
+            <img src={post.avatar || avatarSVG} alt="" />
+          </div>
           <div className="pc-meta">
             <div className="pc-handle">{author}</div>
-            <div className="pc-sub">{when} • {space}</div>
+            <div className="pc-sub">
+              {when} • {space}
+            </div>
           </div>
           <div className="pc-title">{title}</div>
         </div>
@@ -47,19 +63,35 @@ export default function PostCard({ post, onPortal }: { post: Post; onPortal?: (p
         {/* bottom frosted bar with 5 actions */}
         <div className="pc-botbar">
           <div className="pc-actions">
-            <button className="pc-act profile" onClick={() => setOpen((v) => !v)} aria-label="Profile actions">
+            <button
+              className="pc-act profile"
+              onClick={() => setOpen((v) => !v)}
+              aria-label="Profile actions"
+            >
               <span className="ico" />
               <span>Profile</span>
             </button>
-            <button className="pc-act" onClick={() => setOpen((v) => !v)} aria-label="Engage">
+            <button
+              className="pc-act"
+              onClick={() => setOpen((v) => !v)}
+              aria-label="Engage"
+            >
               <span className="ico heart" />
               <span>Engage</span>
             </button>
-            <button className="pc-act" onClick={() => setOpen((v) => !v)} aria-label="Comment">
+            <button
+              className="pc-act"
+              onClick={() => setOpen((v) => !v)}
+              aria-label="Comment"
+            >
               <span className="ico comment" />
               <span>Comment</span>
             </button>
-            <button className="pc-act" onClick={() => setOpen((v) => !v)} aria-label="Share / Remix">
+            <button
+              className="pc-act"
+              onClick={() => setOpen((v) => !v)}
+              aria-label="Share / Remix"
+            >
               <span className="ico share" />
               <span>Share</span>
             </button>
@@ -80,7 +112,6 @@ export default function PostCard({ post, onPortal }: { post: Post; onPortal?: (p
 
       {/* expanding drawer */}
       <div className="pc-drawer">
-        {/* Simple content: replace with your emoji keyboard / comment box later */}
         <div style={{ padding: 12, display: "grid", gap: 10 }}>
           <input
             placeholder="Write a comment…"
@@ -99,11 +130,17 @@ export default function PostCard({ post, onPortal }: { post: Post; onPortal?: (p
               <button
                 key={i}
                 style={{
-                  height: 34, padding: "0 10px", borderRadius: 999,
+                  height: 34,
+                  padding: "0 10px",
+                  borderRadius: 999,
                   border: "1px solid rgba(255,255,255,.14)",
-                  background: "rgba(17,20,35,.6)", color: "#fff", cursor: "pointer"
+                  background: "rgba(17,20,35,.6)",
+                  color: "#fff",
+                  cursor: "pointer",
                 }}
-              >{e}</button>
+              >
+                {e}
+              </button>
             ))}
           </div>
         </div>
