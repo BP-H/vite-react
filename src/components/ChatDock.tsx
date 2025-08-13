@@ -1,6 +1,6 @@
 // src/components/ChatDock.tsx
 import { useEffect, useState } from "react";
-import bus from "../lib/bus";
+import bus, { Events } from "../lib/bus";
 
 type Row = { role: "user" | "assistant" | "system"; text: string; partial?: boolean };
 
@@ -18,7 +18,7 @@ export default function ChatDock() {
         }
         return [...prev, { ...r, partial: !!r.partial }].slice(-8);
       });
-    return bus.on("chat:add", add);
+    return bus.on(Events.ChatAdd, add);
   }, []);
 
   return (

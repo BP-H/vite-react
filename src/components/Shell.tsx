@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Feed from "./feed/Feed";
 import AssistantOrb from "./AssistantOrb";
-import bus from "../lib/bus";
+import bus, { Events } from "../lib/bus";
 import "./SidebarFab.css";
 import { Post } from "../types";
 
@@ -14,7 +14,7 @@ export default function Shell({
 }) {
   const [navOpen, setNavOpen] = useState(false);
 
-  useEffect(() => bus.on("nav:goto", () => setNavOpen(false)), []);
+  useEffect(() => bus.on(Events.NavGoto, () => setNavOpen(false)), []);
 
   const avatarData = useMemo(
     () =>
@@ -56,10 +56,10 @@ export default function Shell({
             </div>
           </div>
           <div className="nav-sec">Navigate</div>
-          <button className="nav-btn" onClick={() => bus.emit("nav:goto", { label: "Feed" })}>📰 Feed</button>
-          <button className="nav-btn" onClick={() => bus.emit("nav:goto", { label: "Chat" })}>💬 Chat</button>
-          <button className="nav-btn" onClick={() => bus.emit("nav:goto", { label: "Messages" })}>📬 Messages</button>
-          <button className="nav-btn" onClick={() => bus.emit("nav:goto", { label: "Profile" })}>👤 Profile</button>
+          <button className="nav-btn" onClick={() => bus.emit(Events.NavGoto, { label: "Feed" })}>📰 Feed</button>
+          <button className="nav-btn" onClick={() => bus.emit(Events.NavGoto, { label: "Chat" })}>💬 Chat</button>
+          <button className="nav-btn" onClick={() => bus.emit(Events.NavGoto, { label: "Messages" })}>📬 Messages</button>
+          <button className="nav-btn" onClick={() => bus.emit(Events.NavGoto, { label: "Profile" })}>👤 Profile</button>
           <div className="nav-divider" />
           <button className="nav-btn" onClick={() => setNavOpen(false)}>✕ Close</button>
         </div>

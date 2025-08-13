@@ -3,7 +3,7 @@ import { Canvas } from "@react-three/fiber";
 import { Float, Instances, Instance } from "@react-three/drei";
 import * as THREE from "three";
 import { useEffect, useMemo, useState } from "react";
-import bus from "../lib/bus";
+import bus, { Events } from "../lib/bus";
 import { WorldState, defaultWorld, clampWorld } from "../lib/world";
 
 function ringPositions(count: number) {
@@ -30,7 +30,7 @@ export default function BackgroundVoid() {
 
   // listen for updates from the orb
   useEffect(() => {
-    return bus.on("world:update", (patch: Partial<WorldState>) => {
+    return bus.on(Events.WorldUpdate, (patch: Partial<WorldState>) => {
       setW((prev) => clampWorld({ ...prev, ...patch }));
     });
   }, []);

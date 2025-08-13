@@ -4,7 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import { Float, Instances, Instance, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { Post } from "../types";
-import bus from "../lib/bus";
+import bus, { Events } from "../lib/bus";
 import { WorldState, defaultWorld, clampWorld } from "../lib/world";
 
 function ringPositions(count: number) {
@@ -28,7 +28,7 @@ function FloorGrid({ color, opacity }: { color: string; opacity: number }) {
 
 export default function World3D({ selected, onBack }: { selected: Post | null; onBack: () => void }) {
   const [w, setW] = useState<WorldState>(defaultWorld);
-  useEffect(() => bus.on("world:update", (p: Partial<WorldState>) => setW((s) => clampWorld({ ...s, ...p }))), []);
+  useEffect(() => bus.on(Events.WorldUpdate, (p: Partial<WorldState>) => setW((s) => clampWorld({ ...s, ...p }))), []);
 
   const bg = w.theme === "dark" ? "#0b0d12" : "#f6f8fb";
   const fogC = w.theme === "dark" ? "#0b0d12" : "#f1f4fa";

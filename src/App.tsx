@@ -4,7 +4,7 @@ import "./styles.css";
 import Shell from "./components/Shell";
 import ChatDock from "./components/ChatDock";
 import { Post } from "./types";
-import bus from "./lib/bus";
+import bus, { Events } from "./lib/bus";
 
 const BackgroundVoid = lazy(() => import("./three/BackgroundVoid"));
 const World3D = lazy(() => import("./components/World3D"));
@@ -24,7 +24,7 @@ export default function App() {
   }, []);
 
   const leaveWorld = useCallback(() => setMode("feed"), []);
-  useEffect(() => bus.on("ui:leave", () => setMode("feed")), []);
+  useEffect(() => bus.on(Events.UiLeave, () => setMode("feed")), []);
 
   const overlayStyle = useMemo(
     () => ({ "--px": `${burst.x}px`, "--py": `${burst.y}px` }) as React.CSSProperties,
